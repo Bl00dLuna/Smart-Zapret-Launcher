@@ -128,7 +128,7 @@ set "choice="
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              SMART ZAPRET LAUNCHER v1.02                     ║
+echo  ║              SMART ZAPRET LAUNCHER v1.03                     ║
 echo  ║                   by Bl00dLuna                               ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.

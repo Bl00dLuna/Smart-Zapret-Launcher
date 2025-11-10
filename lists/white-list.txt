@@ -1,6 +1,7 @@
 2ch.hk
 2ip.ru
 3dnews.ru
+avito.ru
 akamaitechnologies.com
 alfabank.ru
 citilink.ru
@@ -15,10 +16,7 @@ kremlin.ru
 mail.ru
 mos.ru
 mts.ru
-microsoft.com
-msi.com
 multimc.org
-nvidia.com
 playground.ru
 ok.ru
 ozon.ru
@@ -26,7 +24,6 @@ rf4game.com
 rf4game.ru
 sberbank.ru
 tbank.ru
-valve.net
 vk.com
 vtb.ru
 wildberries.ru
