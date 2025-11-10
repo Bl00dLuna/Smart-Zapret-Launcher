@@ -1,16 +1,38 @@
 @echo off
-:: ПРАВА АДМИНА
-NET SESSION >nul 2>&1
-if %errorlevel% neq 0 (
-    echo Requesting administrator privileges...
-    PowerShell -Command "Start-Process '%~s0' -Verb RunAs"
-    exit /b
-)
 chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
+set "IS_ADMIN=0"
 
-:: Переменные для настроек УБИРАЕМ НАЧАЛЬНЫЕ ЗНАЧЕНИЯ!
+:: Проверка прав админа
+whoami /groups | findstr /i "S-1-16-12288" > nul && set "IS_ADMIN=1"
+if %IS_ADMIN% equ 0 NET SESSION >nul 2>&1 && set "IS_ADMIN=1"
+:: Если не админ - запрашиваем права
+if %IS_ADMIN% equ 0 (
+    if "%1"=="--admin" (
+        echo.
+        echo КРИТИЧЕСКАЯ ОШИБКА: НЕТ ПРАВ АДМИНА
+        echo.
+        echo Запустите вручную от имени администратора
+        echo Или включите UAC в настройках Windows
+        pause
+        exit /b 1
+    )
+
+    echo Запрос прав администратора...
+    PowerShell -Command "Start-Process '%~s0' -ArgumentList '--admin' -Verb RunAs" 2>nul
+    if errorlevel 1 (
+        echo.
+        echo ОШИБКА: Не удалось запросить права администратора
+        echo.
+        echo 1. Запустите ПКМ - "Как администратор"
+        echo 2. Или включите PowerShell в системе
+        pause
+    )
+    exit /b
+)
+
+:: Переменные для настроек
 set "SHOW_LOGS="
 set "USE_IPSET="
 set "TEMP_DIR=temporary"
@@ -42,13 +64,13 @@ if not defined USE_IPSET (
     )
 )
 
-:: Создаем бэкап реального ipset файла при первом запуске
+:: бэкап реального ipset файла при первом запуске
 if not exist "%IPSET_FILE%.backup" (
     if exist "%IPSET_FILE%" (
         :: Сохраняем текущий файл как бэкап (реальные IP)
         copy "%IPSET_FILE%" "%IPSET_FILE%.backup" >nul
         echo Создан бэкап реального ipset файла
-        :: Теперь создаем заглушку если ipset выключен
+        :: Заглушка если ipset выключен
         if "%USE_IPSET%"=="0" (
             echo 192.0.2.1/32 > "%IPSET_FILE%"
             echo Создана заглушка для отключенного ipset
@@ -83,21 +105,6 @@ if not exist "%IPSET_FILE%.backup" (
     )
 )
 
-:: Проверка прав администратора
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo.
-    echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
-    echo  ╚══════════════════════════════════════════════════════════════╝
-    echo.
-    echo  Требуются права администратора!
-    echo  Запустите от имени администратора
-    echo.
-    pause
-    exit /b 1
-)
-
 :: Проверка Zapret и папок
 if not exist "bin\winws.exe" (
     echo.
@@ -128,7 +135,7 @@ set "choice="
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              SMART ZAPRET LAUNCHER v1.03                     ║
+echo  ║              SMART ZAPRET LAUNCHER v1.04                     ║
 echo  ║                   by Bl00dLuna                               ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
@@ -154,7 +161,6 @@ echo  [94mm - Открыть папку с инструкциями[0m
 echo  [94md - Узнать IP заблокированного домена[0m
 echo.
 set /p choice="Выберите действие [0-3] или опцию [i,l,m,d]: "
-:: Стало интересно, что тут? :)
 
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
@@ -185,8 +191,7 @@ timeout /t 1 >nul
 goto main_loop
 
 :disable_ipset
-:: Выключаем ipset - создаем файл с тестовым IP вместо реального списка
-:: НЕ трогаем бэкап, только основной файл
+:: Выключаем ipset - создаем файл с заглушкой
 echo 192.0.2.1/32 > "%IPSET_FILE%"
 echo Файл ipset заменен тестовым IP (192.0.2.1/32)
 goto :eof
@@ -231,7 +236,7 @@ goto main_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ПОИСК IP АДРЕСА ДОМЕНА                     ║
+echo  ║                   ПОИСК IP АДРЕСА ДОМЕНA                     ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  [92mИнструкция:[0m
@@ -259,19 +264,6 @@ echo Возвращаюсь в меню...
 timeout /t 2 >nul
 goto main_loop
 
-echo.
-echo Открываю 2ip.ru/dig/...
-echo Сайт откроется в браузере по умолчанию...
-echo Домен для поиска: %domain%
-echo.
-
-:: Открываем сайт 2ip.ru с автоматической подстановкой домена
-start "" "https://2ip.ru/dig/?domain=%domain%"
-
-echo Через 3 секунды вернусь в меню...
-timeout /t 3 >nul
-goto main_loop
-
 :launch_all_configs
 cls
 echo.
@@ -290,62 +282,82 @@ if exist "%LAST_CONFIGS_ALL%" (
     )
     echo.
     set /p "use_last=Запустить эти конфиги? [Y/N]: "
+    
+    setlocal enabledelayedexpansion
     if /i "!use_last!"=="Y" (
+        endlocal
         call :run_saved_configs_all
-        goto configs_launched
+        :: ЕСЛИ УСПЕШНО ЗАПУСТИЛИСЬ
+        if not errorlevel 1 (
+            goto configs_launched
+        ) else (
+            echo Ошибка запуска сохраненных конфигов!
+            pause
+        )
     ) else (
         :: ЕСЛИ нет - УДАЛЯЕМ СОХРАНЁНКУ
-        del "%LAST_CONFIGS_ALL%" >nul 2>&1
-        echo Сохранённые конфиги удалены.
-        timeout /t 1 >nul
+        if /i "!use_last!"=="N" (
+            endlocal
+            del "%LAST_CONFIGS_ALL%" >nul 2>&1
+            echo Сохранённые конфиги удалены.
+            timeout /t 1 >nul
+        ) else (
+            endlocal
+        )
     )
 )
 :: Выбор стандартных категорий + одной дополнительной
 call :select_all_configs
-goto main_loop
+goto :eof
 
-:configs_launched
-timeout /t 3 >nul
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                    ZAPRET ЗАПУЩЕН                            ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo Запущено конфигов: %config_count%
-echo Запущены конфиги: %active_configs%
-echo.
-if "%USE_IPSET%"=="1" (
-    echo  [95mipset включен[0m
-) else (
-    echo  [95mipset выключен[0m
-)
-if "%SHOW_LOGS%"=="1" (
-    echo  [96mЛоги включены - окна WinWS открыты[0m
-)
-echo.
-echo  1 - Перезапустить конфиги
-echo  2 - Остановить Zapret и вернуться в меню
-echo  3 - Остановить Zapret и выйти
-echo.
-set /p choice="Выберите действие [1-3]: "
+:run_saved_configs_all
+:: Запуск сохраненных конфигов для 1го пункта
+set "saved_configs="
+set "config_count=0"
 
-if "%choice%"=="1" goto launch_all_configs
-if "%choice%"=="2" (
-    taskkill /f /im winws.exe >nul 2>&1
-    goto main_loop
+if not exist "%LAST_CONFIGS_ALL%" (
+    echo Не удалось найти сохраненные конфиги!
+    pause
+    exit /b 1
 )
-if "%choice%"=="3" goto exit
-goto main_loop
+
+setlocal enabledelayedexpansion
+for /f "tokens=2 delims=:" %%a in ('type "%LAST_CONFIGS_ALL%" 2^>nul') do (
+    set "config_name=%%a"
+    set "config_name=!config_name: =!"
+    :: ИЩЕМ КОНФИГ ВО ВСЕХ ПОДПАПКАХ
+    for /d %%d in ("configs\*") do (
+        if exist "configs\%%~nxd\!config_name!.conf" (
+            if defined saved_configs (
+                set "saved_configs=!saved_configs! configs\%%~nxd\!config_name!.conf"
+            ) else (
+                set "saved_configs=configs\%%~nxd\!config_name!.conf"
+            )
+            set /a config_count+=1
+        )
+    )
+)
+
+:: Сохраняем переменные
+set "saved_configs_val=!saved_configs!"
+set "config_count_val=!config_count!"
+endlocal & set "saved_configs=%saved_configs_val%" & set "config_count=%config_count_val%"
+
+if "%config_count%"=="0" (
+    echo Не удалось найти сохраненные конфиги!
+    pause
+    exit /b 1
+)
+
+call :run_selected_configs "%saved_configs%"
+goto configs_launched
 
 :select_all_configs
-:: Выбор стандартных категорий + одной дополнительной
 set "selected_configs="
 set "config_count=0"
 set "extra_category="
 set "category_config="
 
-:: Получаем список ВСЕХ подкаталогов в configs
 setlocal enabledelayedexpansion
 set "category_list="
 set "num_categories=0"
@@ -383,13 +395,11 @@ echo.
 echo  Доступные дополнительные категории:
 echo.
 
-:: Показываем только НЕстандартные папки (первые 5 по алфавиту)
 setlocal enabledelayedexpansion
 set index=1
 set count=0
 for /f "delims=" %%d in ('dir "configs\*" /ad /b ^| findstr /v /i "lists bin configs_bat temporary" ^| sort') do (
     set "dir_name=%%d"
-    :: Пропускаем стандартные категории
     if /i not "!dir_name!"=="discord" (
         if /i not "!dir_name!"=="gaming" (
             if /i not "!dir_name!"=="universal" (
@@ -427,8 +437,7 @@ if /i "%cat_choice%"=="S" (
     set "extra_category="
     goto select_standard_configs
 )
-
-:: Получаем выбранную категорию
+:: Доп категория
 set "extra_category="
 setlocal enabledelayedexpansion
 for /l %%i in (1, 1, %total_categories%) do (
@@ -454,10 +463,8 @@ if defined extra_category (
     set "actual_categories=%actual_categories% %extra_category%"
 )
 
-:: universal ВСЕГДА последний
 set "actual_categories=%actual_categories% universal"
 
-:: Для каждой категории выбираем конфиг
 set "selected_configs="
 set "config_count=0"
 
@@ -465,9 +472,7 @@ for %%c in (%actual_categories%) do (
     call :select_config_for_category_all "%%c"
 )
 
-:: ЗАПУСКАЕМ ВЫБРАННЫЕ КОНФИГИ
 if defined selected_configs (
-    :: СОХРАНЯЕМ ВЫБРАННЫЕ КОНФИГИ В ФАЙЛ ДЛЯ 1ГО ПУНКТА
     del "%LAST_CONFIGS_ALL%" >nul 2>&1
     setlocal enabledelayedexpansion
     set index=1
@@ -515,7 +520,7 @@ set "category_config="
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ВЫБОР КОНФИГА ДЛЯ %cat%                   ║
+echo  ║                   ВЫБОР КОНФИГА ДЛЯ %cat%                    ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 
@@ -528,12 +533,10 @@ if not exist "configs\%cat%\*.conf" (
     goto :eof
 )
 
-:: ИСПОЛЬЗУЕМ ФАЙЛ ДЛЯ 1ГО ПУНКТА
 if exist "%TEMP_DIR%\current_configs_all.txt" del "%TEMP_DIR%\current_configs_all.txt" >nul 2>&1
 setlocal enabledelayedexpansion
 if exist "%TEMP_DIR%\temp_sorted.txt" del "%TEMP_DIR%\temp_sorted.txt" >nul 2>&1
 
-:: Сбор имен файлов
 for %%f in ("configs\%cat%\*.conf") do (
     set "name=%%~nf"
     set "num_part="
@@ -549,7 +552,6 @@ for %%f in ("configs\%cat%\*.conf") do (
     echo !sort_key!:%%f>> "%TEMP_DIR%\temp_sorted.txt"
 )
 
-:: Сортировка
 sort "%TEMP_DIR%\temp_sorted.txt" /o "%TEMP_DIR%\temp_sorted.txt"
 set index=1
 for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
@@ -558,12 +560,11 @@ for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
         set "basename=!fullpath!"
         for %%f in ("!fullpath!") do set "basename=%%~nxf"
         set "basename=!basename:~0,-5!"
-        
+
         :: ВЫРАВНИВАЕМ НОМЕРА(Не работает. Похуй, потом починю)
         set "display_index=  !index!"
         set "display_index=!display_index:~-2!"
         echo  !display_index! - !basename!
-        
         echo !index!:!basename!>> "%TEMP_DIR%\current_configs_all.txt"
         set /a index+=1
     )
@@ -584,7 +585,6 @@ if /i "%input%"=="R" (
     set "choice=%input%"
 )
 
-:: ИСПОЛЬЗУЕМ ФАЙЛ ДЛЯ ПЕРВОГО ПУНКТА
 for /f "tokens=1,2 delims=:" %%a in ('type "%TEMP_DIR%\current_configs_all.txt" 2^>nul') do (
     if "%%a"=="%choice%" (
         set "category_config=configs\%cat%\%%b.conf"
@@ -596,89 +596,40 @@ echo Неверный выбор: %choice%
 timeout /t 2 >nul
 goto show_simple_menu_all
 
-:run_selected_configs
-set "configs_to_run=%~1"
+:configs_launched
+timeout /t 3 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ЗАПУСК КОНФИГОВ                            ║
+echo  ║                    ZAPRET ЗАПУЩЕН                            ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
-echo Останавливаю Zapret...
-taskkill /f /im winws.exe >nul 2>&1
-timeout /t 1 >nul
-
-:: Запускаем конфиги один раз
-set "active_configs="
-set "run_count=0"
-setlocal enabledelayedexpansion
-
-:: Запускаем ВСЕ выбранные конфиги
-for %%c in (!configs_to_run!) do (
-    for %%f in ("%%c") do (
-        echo Запускаю: %%~nf
-        if "!SHOW_LOGS!"=="1" (
-            start "Zapret_%%~nf" "bin\winws.exe" @"%%c"
-        ) else (
-            start "Zapret_%%~nf" /B "bin\winws.exe" @"%%c"
-        )
-        if defined active_configs (
-            set "active_configs=!active_configs!, %%~nf"
-        ) else (
-            set "active_configs=%%~nf"
-        )
-        set /a run_count+=1
-    )
+echo Запущено конфигов: %config_count%
+echo Запущены конфиги: %active_configs%
+echo.
+if "%USE_IPSET%"=="1" (
+    echo  [95mipset включен[0m
+) else (
+    echo  ipset выключен
 )
+if "%SHOW_LOGS%"=="1" (
+    echo  [96mЛоги включены - окна WinWS открыты[0m
+)
+echo.
+echo  1 - Перезапустить конфиги
+echo  2 - Остановить Zapret и вернуться в меню
+echo  3 - Остановить Zapret и выйти
+echo.
+set /p choice="Выберите действие [1-3]: "
 
-endlocal & set "active_configs=%active_configs%" & set "config_count=%run_count%"
-goto :eof
-
-:run_saved_configs_all
-:: Запуск сохраненных конфигов для 1го пункта
-set "saved_configs="
-set "config_count=0"
-
-if not exist "%LAST_CONFIGS_ALL%" (
-    echo Не удалось найти сохраненные конфиги!
-    pause
+if "%choice%"=="1" goto launch_all_configs
+if "%choice%"=="2" (
+    taskkill /f /im winws.exe >nul 2>&1
     goto main_loop
 )
+if "%choice%"=="3" goto exit
+goto main_loop
 
-setlocal enabledelayedexpansion
-for /f "tokens=2 delims=:" %%a in ('type "%LAST_CONFIGS_ALL%" 2^>nul') do (
-    set "config_name=%%a"
-    set "config_name=!config_name: =!"
-    :: ИЩЕМ КОНФИГ ВО ВСЕХ ПОДПАПКАХ
-    for /d %%d in ("configs\*") do (
-        if exist "configs\%%~nxd\!config_name!.conf" (
-            if defined saved_configs (
-                set "saved_configs=!saved_configs! configs\%%~nxd\!config_name!.conf"
-            ) else (
-                set "saved_configs=configs\%%~nxd\!config_name!.conf"
-            )
-            set /a config_count+=1
-        )
-    )
-)
-endlocal & set "saved_configs=%saved_configs%" & set "config_count=%config_count%"
-
-if "%config_count%"=="0" (
-    echo Не удалось найти сохраненные конфиги!
-    pause
-    goto main_loop
-)
-
-call :run_selected_configs "%saved_configs%"
-goto configs_launched
-
-:trim_spaces
-set "var_name=%~1"
-setlocal enabledelayedexpansion
-set "value=!%var_name%!"
-set "value=!value: =!"
-endlocal & set "%var_name%=%value%"
-goto :eof
 
 :launch_multi_config
 cls
@@ -690,13 +641,11 @@ echo.
 echo  Выберите категории для запуска:
 echo.
 
-:: Сканируем папки и создаем временный файл с категориями
 del "%TEMP_DIR%\categories.txt" >nul 2>&1
 
 setlocal enabledelayedexpansion
 set "category_count=0"
 
-:: Сканируем ВСЕ папки в configs
 for /d %%d in ("configs\*") do (
     set "dir_name=%%~nxd"
     if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="configs_bat" if /i not "!dir_name!"=="!TEMP_DIR!" (
@@ -705,7 +654,6 @@ for /d %%d in ("configs\*") do (
     )
 )
 
-:: Показываем категории
 for /f "tokens=1,2 delims=:" %%a in ('type "%TEMP_DIR%\categories.txt"') do (
     echo  %%a - %%b
 )
@@ -741,18 +689,15 @@ if /i "%cat_choice_multi%"=="T" (
     )
 )
 
-:: СБРАСЫВАЕМ ПЕРЕМЕННЫЕ ПЕРЕД ВЫБОРОМ
 set "selected_configs="
 set "config_count=0"
 
-:: Для каждой выбранной категории выбираем конфиг
 setlocal enabledelayedexpansion
 for %%c in (%cat_choice_multi%) do (
     call :select_config_for_category "%%c"
 )
 endlocal & set "selected_configs=%selected_configs%" & set "config_count=%config_count%"
 
-:: Проверяем что не выбрано больше 5 конфигов
 if %config_count% gtr 5 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
@@ -765,9 +710,7 @@ if %config_count% gtr 5 (
     goto launch_multi_config
 )
 
-:: Запускаем выбранные конфиги
 if defined selected_configs (
-    :: СОХРАНЯЕМ ВЫБРАННЫЕ КОНФИГИ В ФАЙЛ
     del "%LAST_CONFIGS%" >nul 2>&1
     setlocal enabledelayedexpansion
     set index=1
@@ -789,6 +732,42 @@ if defined selected_configs (
     goto launch_multi_config
 )
 
+:run_saved_configs
+set "saved_configs="
+set "config_count=0"
+
+if not exist "%LAST_CONFIGS%" (
+    echo Не удалось найти сохраненные конфиги!
+    pause
+    goto main_loop
+)
+
+setlocal enabledelayedexpansion
+for /f "tokens=2 delims=:" %%a in ('type "%LAST_CONFIGS%" 2^>nul') do (
+    set "config_name=%%a"
+    set "config_name=!config_name: =!"
+    for /d %%d in ("configs\*") do (
+        if exist "configs\%%~nxd\!config_name!.conf" (
+            if defined saved_configs (
+                set "saved_configs=!saved_configs! configs\%%~nxd\!config_name!.conf"
+            ) else (
+                set "saved_configs=configs\%%~nxd\!config_name!.conf"
+            )
+            set /a config_count+=1
+        )
+    )
+)
+endlocal & set "saved_configs=%saved_configs%" & set "config_count=%config_count%"
+
+if "%config_count%"=="0" (
+    echo Не удалось найти сохраненные конфиги!
+    pause
+    goto main_loop
+)
+
+call :run_selected_configs "%saved_configs%"
+goto multi_configs_launched
+
 :select_config_for_category
 set "cat_num=%~1"
 set "cat_name="
@@ -808,7 +787,6 @@ if not defined cat_name goto :eof
 call :simple_config_selector "%cat_name%"
 set "current_cfg=%category_config%"
 
-:: ПРОВЕРЯЕМ ЧТО КОНФИГ ВЫБРАН
 if defined current_cfg (
     if defined selected_configs (
         set "selected_configs=!selected_configs! !current_cfg!"
@@ -827,7 +805,7 @@ set "category_config="
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ВЫБОР КОНФИГА ДЛЯ %cat%                   ║
+echo  ║                   ВЫБОР КОНФИГА ДЛЯ %cat%                    ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 
@@ -843,7 +821,6 @@ setlocal enabledelayedexpansion
 if exist "%TEMP_DIR%\current_configs.txt" del "%TEMP_DIR%\current_configs.txt" >nul 2>&1
 if exist "%TEMP_DIR%\temp_sorted.txt" del "%TEMP_DIR%\temp_sorted.txt" >nul 2>&1
 
-:: Сбор имен файлов
 for %%f in ("configs\%cat%\*.conf") do (
     set "name=%%~nf"
     set "num_part="
@@ -859,7 +836,6 @@ for %%f in ("configs\%cat%\*.conf") do (
     echo !sort_key!:%%f>> "%TEMP_DIR%\temp_sorted.txt"
 )
 
-:: Сортируем и берем первые 15
 sort "%TEMP_DIR%\temp_sorted.txt" /o "%TEMP_DIR%\temp_sorted.txt"
 set index=1
 for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
@@ -889,7 +865,6 @@ if /i "%input%"=="R" (
     set "choice=%input%"
 )
 
-:: УСТАНАВЛИВАЕМ category_config
 setlocal enabledelayedexpansion
 for /f "tokens=1,2 delims=:" %%a in ('type "%TEMP_DIR%\current_configs.txt" 2^>nul') do (
     if "%%a"=="!choice!" (
@@ -941,82 +916,49 @@ if "%choice%"=="2" (
 if "%choice%"=="3" goto exit
 goto main_loop
 
-:run_saved_configs
-:: Запуск сохраненных конфигов
-set "saved_configs="
-set "config_count=0"
-
-if not exist "%LAST_CONFIGS%" (
-    echo Не удалось найти сохраненные конфиги!
-    pause
-    goto main_loop
-)
-
-setlocal enabledelayedexpansion
-for /f "tokens=2 delims=:" %%a in ('type "%LAST_CONFIGS%" 2^>nul') do (
-    set "config_name=%%a"
-    set "config_name=!config_name: =!"
-    :: ИЩЕМ КОНФИГ ВО ВСЕХ ПОДПАПКАХ
-    for /d %%d in ("configs\*") do (
-        if exist "configs\%%~nxd\!config_name!.conf" (
-            if defined saved_configs (
-                set "saved_configs=!saved_configs! configs\%%~nxd\!config_name!.conf"
-            ) else (
-                set "saved_configs=configs\%%~nxd\!config_name!.conf"
-            )
-            set /a config_count+=1
-        )
-    )
-)
-endlocal & set "saved_configs=%saved_configs%" & set "config_count=%config_count%"
-
-if "%config_count%"=="0" (
-    echo Не удалось найти сохраненные конфиги!
-    pause
-    goto main_loop
-)
-
-call :run_selected_configs "%saved_configs%"
-goto multi_configs_launched
-
-:bat_launched
-timeout /t 3 >nul
+:run_selected_configs
+set "configs_to_run=%~1"
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                 BAT-ФАЙЛ ЗАПУЩЕН                             ║
+echo  ║                   ЗАПУСК КОНФИГОВ                            ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
-echo Запущен bat-файл: %bat_name%
-echo.
-if "%USE_IPSET%"=="1" (
-    echo  [95mipset включен[0m
-) else (
-    echo  [95mipset выключен[0m
-)
-if "%SHOW_LOGS%"=="1" (
-    echo  [96mЛоги включены - окно WinWS открыто[0m
-)
-echo.
-echo  1 - Остановить Zapret и выбрать другой bat-файл
-echo  2 - Остановить Zapret и вернуться в меню
-echo  3 - Остановить Zapret и выйти
-echo.
-set /p choice="Выберите действие [1-3]: "
+echo Останавливаю Zapret...
+taskkill /f /im winws.exe >nul 2>&1
+timeout /t 1 >nul
 
-if exist "%TEMP_DIR%\bat_list.txt" del "%TEMP_DIR%\bat_list.txt" >nul 2>&1
-if exist "%TEMP_DIR%\bat_paths.txt" del "%TEMP_DIR%\bat_paths.txt" >nul 2>&1
+set "active_configs="
+set "run_count=0"
+setlocal enabledelayedexpansion
 
-if "%choice%"=="1" (
-    taskkill /f /im winws.exe >nul 2>&1
-    goto launch_bat_file
+for %%c in (!configs_to_run!) do (
+    for %%f in ("%%c") do (
+        echo Запускаю: %%~nf
+        if "!SHOW_LOGS!"=="1" (
+            start "Zapret_%%~nf" "bin\winws.exe" @"%%c"
+        ) else (
+            start "Zapret_%%~nf" /B "bin\winws.exe" @"%%c"
+        )
+        if defined active_configs (
+            set "active_configs=!active_configs!, %%~nf"
+        ) else (
+            set "active_configs=%%~nf"
+        )
+        set /a run_count+=1
+    )
 )
-if "%choice%"=="2" (
-    taskkill /f /im winws.exe >nul 2>&1
-    goto main_loop
-)
-if "%choice%"=="3" goto exit
-goto main_loop
+
+endlocal & set "active_configs=%active_configs%" & set "config_count=%run_count%"
+goto :eof
+
+:trim_spaces
+set "var_name=%~1"
+setlocal enabledelayedexpansion
+set "value=!%var_name%!"
+set "value=!value: =!"
+endlocal & set "%var_name%=%value%"
+goto :eof
 
 :launch_bat_file
 cls
@@ -1027,7 +969,6 @@ echo  ╚═══════════════════════�
 echo.
 echo Сканирую bat-файлы...
 
-:: Проверяем наличие папки configs_bat
 if not exist "configs_bat\" (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
@@ -1040,11 +981,9 @@ if not exist "configs_bat\" (
     goto main_loop
 )
 
-:: Создаем временный список bat-файлов
 if exist "%TEMP_DIR%\bat_list.txt" del "%TEMP_DIR%\bat_list.txt" >nul 2>&1
 if exist "%TEMP_DIR%\bat_paths.txt" del "%TEMP_DIR%\bat_paths.txt" >nul 2>&1
 
-:: Используем отложенное расширение переменных ВНУТРИ этого блока
 setlocal enabledelayedexpansion
 if exist "%TEMP_DIR%\temp_sorted_bat.txt" del "%TEMP_DIR%\temp_sorted_bat.txt" >nul 2>&1
 
@@ -1063,7 +1002,6 @@ for %%f in ("configs_bat\*.bat") do (
     echo !sort_key!:%%f>> "%TEMP_DIR%\temp_sorted_bat.txt"
 )
 
-:: Сортируем и берем первые 15
 sort "%TEMP_DIR%\temp_sorted_bat.txt" /o "%TEMP_DIR%\temp_sorted_bat.txt"
 set index=1
 set bat_count=0
@@ -1101,7 +1039,6 @@ echo  ║              ВЫБОР BAT-ФАЙЛА ДЛЯ ЗАПУСКА          
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 
-:: Показываем список bat-файлов из файла
 if exist "%TEMP_DIR%\bat_list.txt" (
     for /f "usebackq delims=" %%a in ("%TEMP_DIR%\bat_list.txt") do (
         echo  %%a
@@ -1125,7 +1062,6 @@ if /i "%bat_choice%"=="B" (
     goto main_loop
 )
 
-:: Проверяем валидность выбора и получаем путь к bat-файлу
 set valid_choice=0
 if exist "%TEMP_DIR%\bat_paths.txt" (
     for /f "usebackq tokens=1,2 delims=:" %%a in ("%TEMP_DIR%\bat_paths.txt") do (
@@ -1159,12 +1095,10 @@ echo Останавливаю Zapret...
 taskkill /f /im winws.exe >nul 2>&1
 timeout /t 1 >nul
 
-:: Получаем имя батника для отображения
 for %%f in ("%selected_bat_path%") do set "bat_name=%%~nf"
 
 echo Запускаю bat-файл: %bat_name%
 
-:: ЗАПУСКАЕМ КАК КОНФИГ
 if "%SHOW_LOGS%"=="1" (
     start "Zapret_Bat_%bat_name%" "bin\winws.exe" @"%selected_bat_path%"
 ) else (
@@ -1172,6 +1106,45 @@ if "%SHOW_LOGS%"=="1" (
 )
 
 goto bat_launched
+
+:bat_launched
+timeout /t 3 >nul
+cls
+echo.
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║                 BAT-ФАЙЛ ЗАПУЩЕН                             ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo Запущен bat-файл: %bat_name%
+echo.
+if "%USE_IPSET%"=="1" (
+    echo  [95mipset включен[0m
+) else (
+    echo  ipset выключен
+)
+if "%SHOW_LOGS%"=="1" (
+    echo  [96mЛоги включены - окно WinWS открыто[0m
+)
+echo.
+echo  1 - Остановить Zapret и выбрать другой bat-файл
+echo  2 - Остановить Zapret и вернуться в меню
+echo  3 - Остановить Zapret и выйти
+echo.
+set /p choice="Выберите действие [1-3]: "
+
+if exist "%TEMP_DIR%\bat_list.txt" del "%TEMP_DIR%\bat_list.txt" >nul 2>&1
+if exist "%TEMP_DIR%\bat_paths.txt" del "%TEMP_DIR%\bat_paths.txt" >nul 2>&1
+
+if "%choice%"=="1" (
+    taskkill /f /im winws.exe >nul 2>&1
+    goto launch_bat_file
+)
+if "%choice%"=="2" (
+    taskkill /f /im winws.exe >nul 2>&1
+    goto main_loop
+)
+if "%choice%"=="3" goto exit
+goto main_loop
 
 :exit
 cls
@@ -1185,13 +1158,11 @@ taskkill /f /im winws.exe >nul 2>&1
 taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
 timeout /t 2 >nul
 
-:: очистка DNS
 echo Очищаю DNS кэш...
 ipconfig /flushdns >nul 2>&1
 
 echo Zapret остановлен
 echo.
-:: Удаляем временные файлы при выходе
 if exist "%TEMP_DIR%\temp_*.txt" del "%TEMP_DIR%\temp_*.txt" >nul 2>&1
 if exist "%TEMP_DIR%\*_paths.txt" del "%TEMP_DIR%\*_paths.txt" >nul 2>&1
 timeout /t 2 >nul

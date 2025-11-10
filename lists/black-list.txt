@@ -22,7 +22,6 @@ api.facebook.com
 connect.facebook.com
 messenger.com
 
-
 # SpeedTest
 speedtest.net
 ooklaserver.net

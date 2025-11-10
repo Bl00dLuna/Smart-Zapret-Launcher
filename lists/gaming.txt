@@ -66,9 +66,9 @@ telemetry.gos.ea.com
 atlas.telemetry.gos.ea.com
 telemetry.origin.com
 ord38.telemetry.origin.com
+ssl-lvlt.cdn.ea.com
 gos.ea.com
 atlas.gos.ea.com
-gosp.ea.com
 gosredirector.ea.com
 blaze.ea.com
 rtm.tnt-ea.com
@@ -120,7 +120,7 @@ apex.r2-pc.stryder.respawn.com
 apex.r3-pc.stryder.respawn.com
 apex.r5-pc.stryder.respawn.com
 r5---sn-5hnekn7z.c.2mdn.net
-r5---sn-5hnekn7s.c.2mdn.net  
+r5---sn-5hnekn7s.c.2mdn.net
 r5---sn-5hnekn7y.c.2mdn.net
 r5---sn-5hnekn7k.c.2mdn.net
 projectapex.com
@@ -180,7 +180,6 @@ championshipseriesleague.com
 lcsmerch.com
 leaguehighschool.com
 leagueoflegends.ca
-leagueoflegends.cn @cn
 leagueoflegends.co.kr
 leagueoflegends.com
 leagueoflegends.info
@@ -200,7 +199,6 @@ lolpcs.com
 lolshop.co.kr
 lolstatic.com
 lolusercontent.com
-lpl.com.cn @cn
 pvp.net
 pvp.tv
 ulol.com
@@ -222,7 +220,6 @@ eaassets-a.akamaihd.net
 eamaster.akamai.com
 cloudflare-ech.com
 
-
 # Amazon
 alexa.com
 a2z.com
@@ -238,7 +235,6 @@ aboutamazon.it
 aboutamazon.jp
 aboutamazon.pl
 amaaozn.com
-amazonaws.com
 amazon-fashions.com
 amazon-jp-recruiting.com
 amazon-lantern.com
@@ -302,7 +298,6 @@ aesworkshops.com
 amazonaws-china.com
 amazonaws.biz
 amazonaws.co.uk
-amazonaws.com
 amazonaws.info
 amazonaws.net
 amazonaws.org
@@ -333,7 +328,6 @@ awsthinkbox.com
 awstrack.me
 cdkworkshop.com
 cloudfront.com
-cloudfront.net
 containersonaws.com
 elasticbeanstalk.com
 thinkboxsoftware.com
@@ -341,4 +335,3 @@ amzndns.co.uk
 amzndns.com
 amzndns.net
 amzndns.org
-
