@@ -35,7 +35,7 @@ if %IS_ADMIN% equ 0 (
 :: Переменные для настроек
 set "SHOW_LOGS="
 set "USE_IPSET="
-set "TEMP_DIR=temporary"
+set "TEMP_DIR=%~dp0temporary"
 set "LAST_CONFIGS=%TEMP_DIR%\last_configs.txt"
 set "LAST_CONFIGS_ALL=%TEMP_DIR%\last_configs_all.txt"
 set "LOGS_SETTING=%TEMP_DIR%\logs_setting.txt"
@@ -135,7 +135,7 @@ set "choice="
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              SMART ZAPRET LAUNCHER v1.04                     ║
+echo  ║              SMART ZAPRET LAUNCHER v1.05                     ║
 echo  ║                   by Bl00dLuna                               ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.

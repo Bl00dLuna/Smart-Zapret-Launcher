@@ -73,6 +73,27 @@ gosredirector.ea.com
 blaze.ea.com
 rtm.tnt-ea.com
 
+# Xbox
+gamepass.com
+tellmewhygame.com
+start.ui.xboxlive.com
+profile.xboxlive.com
+login.microsoftonline.com
+login.live.com
+auth.xboxlive.com
+xsts.auth.xboxlive.com
+xbox.co
+xbox.com
+xbox.eu
+xbox.org
+xboxab.com
+xboxgamepass.com
+xboxgamestudios.com
+xboxlive.com
+xboxplayanywhere.com
+xboxservices.com
+xboxstudios.com
+
 # Battle.net
 battle.net
 blizzard.com
@@ -101,6 +122,7 @@ libraries.minecraft.net
 authserver.mojang.com
 sessionserver.mojang.com
 api.mojang.com
+api.minecraftservices.com
 textures.minecraft.net
 callersbane.com
 minecraft-services.net
