@@ -128,6 +128,10 @@ callersbane.com
 minecraft-services.net
 minecraftservices.com
 minecraftshop.com
+modrinth.com
+modrinth.gg
+essential.gg
+sparkuniverse.com
 
 # Apex Legends
 apexlegends.com
@@ -171,7 +175,7 @@ battlefield5.com
 battlefieldheroes.com
 battlefieldv.com
 
-# Riot
+# Riot Games
 historyofdota.com
 historyofdota.net
 historyofdota.org
