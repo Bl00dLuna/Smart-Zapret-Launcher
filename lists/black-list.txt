@@ -231,7 +231,7 @@ amzndns.com
 amzndns.net
 amzndns.org
 
-# Akami
+# Akamai
 akamai.net
 akamaized.net
 akamaiedge.net

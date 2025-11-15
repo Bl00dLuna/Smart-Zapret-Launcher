@@ -171,7 +171,7 @@ battlefield5.com
 battlefieldheroes.com
 battlefieldv.com
 
-# Riot
+# Riot Games
 historyofdota.com
 historyofdota.net
 historyofdota.org
