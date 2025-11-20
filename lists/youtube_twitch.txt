@@ -39,6 +39,8 @@ lh3.googleusercontent.com
 #twitch.tv
 #ttvnw.net
 #jtvnw.net
+#ext-twitch.tv
+#twitchsvc.net
 #live-video.net
 #twitchcdn.net
 #player.twitch.tv

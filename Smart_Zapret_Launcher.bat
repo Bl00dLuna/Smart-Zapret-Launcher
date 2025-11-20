@@ -2,7 +2,7 @@
 chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
-set "IS_ADMIN=0"0
+set "IS_ADMIN=0"
 
 :: Проверка прав админа
 whoami /groups | findstr /i "S-1-16-12288" > nul && set "IS_ADMIN=1"
@@ -34,13 +34,16 @@ if %IS_ADMIN% equ 0 (
 
 :: Переменные для настроек
 set "SHOW_LOGS="
-set "USE_IPSET="
+set "USE_IPSET_GLOBAL="
+set "USE_IPSET_GAMING="
 set "TEMP_DIR=%~dp0temporary"
 set "LAST_CONFIGS=%TEMP_DIR%\last_configs.txt"
 set "LAST_CONFIGS_ALL=%TEMP_DIR%\last_configs_all.txt"
 set "LOGS_SETTING=%TEMP_DIR%\logs_setting.txt"
-set "IPSET_SETTING=%TEMP_DIR%\ipset_setting.txt"
-set "IPSET_FILE=lists\ipset-global.txt"
+set "IPSET_GLOBAL_SETTING=%TEMP_DIR%\ipset_global_setting.txt"
+set "IPSET_GAMING_SETTING=%TEMP_DIR%\ipset_gaming_setting.txt"
+set "IPSET_GLOBAL_FILE=lists\ipset-global.txt"
+set "IPSET_GAMING_FILE=lists\ipset-gaming.txt"
 
 :: Создаем папку для временных файлов если нет
 if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%" >nul 2>&1
@@ -55,54 +58,54 @@ if not defined SHOW_LOGS (
     )
 )
 
-if not defined USE_IPSET (
-    if exist "%IPSET_SETTING%" (
-        set /p USE_IPSET=<"%IPSET_SETTING%" 2>nul
+if not defined USE_IPSET_GLOBAL (
+    if exist "%IPSET_GLOBAL_SETTING%" (
+        set /p USE_IPSET_GLOBAL=<"%IPSET_GLOBAL_SETTING%" 2>nul
     ) else (
-        set "USE_IPSET=0"
-        echo | set /p="0" > "%IPSET_SETTING%"
+        set "USE_IPSET_GLOBAL=0"
+        echo | set /p="0" > "%IPSET_GLOBAL_SETTING%"
     )
 )
 
-:: бэкап реального ipset файла при первом запуске
-if not exist "%IPSET_FILE%.backup" (
-    if exist "%IPSET_FILE%" (
-        :: Сохраняем текущий файл как бэкап (реальные IP)
-        copy "%IPSET_FILE%" "%IPSET_FILE%.backup" >nul
-        echo Создан бэкап реального ipset файла
-        :: Заглушка если ipset выключен
-        if "%USE_IPSET%"=="0" (
-            echo 192.0.2.1/32 > "%IPSET_FILE%"
-            echo Создана заглушка для отключенного ipset
-        )
+if not defined USE_IPSET_GAMING (
+    if exist "%IPSET_GAMING_SETTING%" (
+        set /p USE_IPSET_GAMING=<"%IPSET_GAMING_SETTING%" 2>nul
     ) else (
-        :: Если файла ipset нет - создаем оба файла
-        echo 192.0.2.1/32 > "%IPSET_FILE%"
-        echo 192.0.2.1/32 > "%IPSET_FILE%.backup"
-        echo Созданы файлы ipset (заглушка)
+        set "USE_IPSET_GAMING=0"
+        echo | set /p="0" > "%IPSET_GAMING_SETTING%"
     )
+)
+
+:: Инициализация ipset файлов
+if not exist "%IPSET_GLOBAL_FILE%.backup" (
+    if exist "%IPSET_GLOBAL_FILE%" (
+        copy "%IPSET_GLOBAL_FILE%" "%IPSET_GLOBAL_FILE%.backup" >nul
+    ) else (
+        echo. > "%IPSET_GLOBAL_FILE%"
+        echo. > "%IPSET_GLOBAL_FILE%.backup"
+    )
+)
+
+if not exist "%IPSET_GAMING_FILE%.backup" (
+    if exist "%IPSET_GAMING_FILE%" (
+        copy "%IPSET_GAMING_FILE%" "%IPSET_GAMING_FILE%.backup" >nul
+    ) else (
+        echo. > "%IPSET_GAMING_FILE%"
+        echo. > "%IPSET_GAMING_FILE%.backup"
+    )
+)
+
+:: Применяем текущие настройки ipset
+if "%USE_IPSET_GLOBAL%"=="1" (
+    call :enable_ipset_global
 ) else (
-    :: Если бэкап уже существует, синхронизируем основной файл с настройкой
-    if "%USE_IPSET%"=="0" (
-        set "is_stub=0"
-        for /f "delims=" %%a in ('type "%IPSET_FILE%" 2^>nul') do (
-            if "%%a"=="192.0.2.1/32" set "is_stub=1"
-        )
-        if "!is_stub!"=="0" (
-            echo 192.0.2.1/32 > "%IPSET_FILE%"
-            echo Файл ipset заменен заглушкой
-        )
-    ) else (
-        :: Проверка- файл является заглушкой
-        set "is_stub=0"
-        for /f "delims=" %%a in ('type "%IPSET_FILE%" 2^>nul') do (
-            if "%%a"=="192.0.2.1/32" set "is_stub=1"
-        )
-        if "!is_stub!"=="1" (
-            copy "%IPSET_FILE%.backup" "%IPSET_FILE%" >nul
-            echo Реальный список IP восстановлен из бэкапа
-        )
-    )
+    call :disable_ipset_global
+)
+
+if "%USE_IPSET_GAMING%"=="1" (
+    call :enable_ipset_gaming
+) else (
+    call :disable_ipset_gaming
 )
 
 :: Проверка Zapret и папок
@@ -119,7 +122,6 @@ if not exist "bin\winws.exe" (
 )
 
 :main_loop
-:: ОЧИСТКА ПЕРЕМЕННЫХ БЕЗ ВЫХОДА
 set "selected_configs="
 set "config_count=0"
 set "category_config="
@@ -135,75 +137,103 @@ set "choice="
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              SMART ZAPRET LAUNCHER v1.06                     ║
+echo  ║              SMART ZAPRET LAUNCHER v1.21                     ║
 echo  ║                   by Bl00dLuna                               ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
-if "%USE_IPSET%"=="1" (
-    echo  [95mi - Использовать ipset [ВКЛ] [0m [Действует на universal конфиг и bat-файлы]
+if "%USE_IPSET_GLOBAL%"=="1" (
+    echo  [95mi - Использовать ipset global [ВКЛ] [0m [Действует на universal конфиги и bat-файлы]
 ) else (
-    echo  [95mi - Использовать ipset [ВЫКЛ] [0m [Действует на universal конфиг и bat-файлы]
+    echo  [95mi - Использовать ipset global [ВЫКЛ] [0m [Действует на universal конфиги и bat-файлы]
 )
-if "%SHOW_LOGS%"=="1" (
-    echo  [95ml - Включить логи [ВКЛ][0m
+if "%USE_IPSET_GAMING%"=="1" (
+    echo  [95mg - Использовать ipset gaming [ВКЛ] [0m [Действует только на gaming конфиги]
 ) else (
-    echo  [95ml - Включить логи [ВЫКЛ][0m
+    echo  [95mg - Использовать ipset gaming [ВЫКЛ] [0m [Действует только на gaming конфиги]
+)
+echo.
+if "%SHOW_LOGS%"=="1" (
+    echo  [93ml - Включить логи [ВКЛ][0m
+) else (
+    echo  [93ml - Включить логи [ВЫКЛ][0m
 )
 echo.
 echo  [92m1 - Запустить Zapret (все конфиги) [Рекомендовано для постоянного использования][0m
 echo  [92m2 - Запустить Zapret (отдельные конфиги) [Рекомендовано для тестирования и запуска определённых конфигов][0m
 echo.
-echo  [91m3 - Запустить Zapret (bat-файл) [Старый способ / Не рекомендуется][0m
+echo  [91m3 - Запустить Zapret (bat-файл) [Старый способ обхода][0m
 echo.
 echo  0 - Выйти
 echo.
 echo  [94mm - Открыть папку с инструкциями[0m
 echo.
-set /p choice="Выберите действие [0-3] или опцию [i,l,m]: "
+set /p choice="Выберите действие [0-3] или опцию [i,g,l,m]: "
 
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
 if "%choice%"=="2" goto launch_multi_config
 if "%choice%"=="3" goto launch_bat_file
-if /i "%choice%"=="i" goto toggle_ipset
+if /i "%choice%"=="i" goto toggle_ipset_global
+if /i "%choice%"=="g" goto toggle_ipset_gaming
 if /i "%choice%"=="l" goto toggle_logs
 if /i "%choice%"=="m" goto open_instructions
 echo Неверный выбор!
 timeout /t 2 >nul
 goto main_loop
 
-:toggle_ipset
-if "%USE_IPSET%"=="1" (
-    set "USE_IPSET=0"
-    echo Выключаю ipset...
-    call :disable_ipset
+:toggle_ipset_global
+if "%USE_IPSET_GLOBAL%"=="1" (
+    set "USE_IPSET_GLOBAL=0"
+    echo Выключаю ipset global...
+    call :disable_ipset_global
 ) else (
-    set "USE_IPSET=1"
-    echo Включаю ipset...
-    call :enable_ipset
+    set "USE_IPSET_GLOBAL=1"
+    set "USE_IPSET_GAMING=0"
+    echo Включаю ipset global...
+    call :enable_ipset_global
+    call :disable_ipset_gaming
 )
-:: Сохраняем настройку в файл
-echo | set /p="%USE_IPSET%" > "%IPSET_SETTING%"
+echo | set /p="%USE_IPSET_GLOBAL%" > "%IPSET_GLOBAL_SETTING%"
+echo | set /p="%USE_IPSET_GAMING%" > "%IPSET_GAMING_SETTING%"
 echo Настройка сохранена
 timeout /t 1 >nul
 goto main_loop
 
-:disable_ipset
-:: Выключаем ipset - создаем файл с заглушкой
-echo 192.0.2.1/32 > "%IPSET_FILE%"
-echo Файл ipset заменен тестовым IP (192.0.2.1/32)
+:toggle_ipset_gaming
+if "%USE_IPSET_GAMING%"=="1" (
+    set "USE_IPSET_GAMING=0"
+    echo Выключаю ipset gaming...
+    call :disable_ipset_gaming
+) else (
+    set "USE_IPSET_GAMING=1"
+    set "USE_IPSET_GLOBAL=0"
+    echo Включаю ipset gaming...
+    call :enable_ipset_gaming
+    call :disable_ipset_global
+)
+echo | set /p="%USE_IPSET_GLOBAL%" > "%IPSET_GLOBAL_SETTING%"
+echo | set /p="%USE_IPSET_GAMING%" > "%IPSET_GAMING_SETTING%"
+echo Настройка сохранена
+timeout /t 1 >nul
+goto main_loop
+
+:disable_ipset_global
+echo. > "%IPSET_GLOBAL_FILE%"
 goto :eof
 
-:enable_ipset
-:: Включаем ipset - восстанавливаем реальный список IP из бэкапа
-if exist "%IPSET_FILE%.backup" (
-    copy "%IPSET_FILE%.backup" "%IPSET_FILE%" >nul
-    echo Реальный список IP восстановлен из бэкапа
-) else (
-    echo ВНИМАНИЕ: Файл с реальным списком IP не найден!
-    echo Создайте файл %IPSET_FILE% с IP-адресами для блокировки
-    :: Создаем пустой файл чтобы избежать ошибок
-    echo. > "%IPSET_FILE%"
+:enable_ipset_global
+if exist "%IPSET_GLOBAL_FILE%.backup" (
+    copy "%IPSET_GLOBAL_FILE%.backup" "%IPSET_GLOBAL_FILE%" >nul
+)
+goto :eof
+
+:disable_ipset_gaming
+echo. > "%IPSET_GAMING_FILE%"
+goto :eof
+
+:enable_ipset_gaming
+if exist "%IPSET_GAMING_FILE%.backup" (
+    copy "%IPSET_GAMING_FILE%.backup" "%IPSET_GAMING_FILE%" >nul
 )
 goto :eof
 
@@ -215,7 +245,6 @@ if "%SHOW_LOGS%"=="1" (
     set "SHOW_LOGS=1"
     echo Логи включены
 )
-:: Сохраняем настройку в файл
 echo | set /p="%SHOW_LOGS%" > "%LOGS_SETTING%"
 timeout /t 1 >nul
 goto main_loop
@@ -238,7 +267,6 @@ echo  ║                ЗАПУСК ВСЕХ КОНФИГОВ                 
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 
-:: Проверяем сохраненные конфиги ИЗ ПУНКТА 1
 set "use_last=0"
 if exist "%LAST_CONFIGS_ALL%" (
     echo.
@@ -253,7 +281,6 @@ if exist "%LAST_CONFIGS_ALL%" (
     if /i "!use_last!"=="Y" (
         endlocal
         call :run_saved_configs_all
-        :: ЕСЛИ УСПЕШНО ЗАПУСТИЛИСЬ
         if not errorlevel 1 (
             goto configs_launched
         ) else (
@@ -261,7 +288,6 @@ if exist "%LAST_CONFIGS_ALL%" (
             pause
         )
     ) else (
-        :: ЕСЛИ нет - УДАЛЯЕМ СОХРАНЁНКУ
         if /i "!use_last!"=="N" (
             endlocal
             del "%LAST_CONFIGS_ALL%" >nul 2>&1
@@ -272,12 +298,11 @@ if exist "%LAST_CONFIGS_ALL%" (
         )
     )
 )
-:: Выбор стандартных категорий + одной дополнительной
+
 call :select_all_configs
 goto :eof
 
 :run_saved_configs_all
-:: Запуск сохраненных конфигов для 1го пункта
 set "saved_configs="
 set "config_count=0"
 
@@ -291,20 +316,19 @@ setlocal enabledelayedexpansion
 for /f "tokens=2 delims=:" %%a in ('type "%LAST_CONFIGS_ALL%" 2^>nul') do (
     set "config_name=%%a"
     set "config_name=!config_name: =!"
-    :: ИЩЕМ КОНФИГ ВО ВСЕХ ПОДПАПКАХ
     for /d %%d in ("configs\*") do (
         if exist "configs\%%~nxd\!config_name!.conf" (
+            set "config_path=configs\%%~nxd\!config_name!.conf"
             if defined saved_configs (
-                set "saved_configs=!saved_configs! configs\%%~nxd\!config_name!.conf"
+                set "saved_configs=!saved_configs! !config_path!"
             ) else (
-                set "saved_configs=configs\%%~nxd\!config_name!.conf"
+                set "saved_configs=!config_path!"
             )
             set /a config_count+=1
         )
     )
 )
 
-:: Сохраняем переменные
 set "saved_configs_val=!saved_configs!"
 set "config_count_val=!config_count!"
 endlocal & set "saved_configs=%saved_configs_val%" & set "config_count=%config_count_val%"
@@ -403,7 +427,7 @@ if /i "%cat_choice%"=="S" (
     set "extra_category="
     goto select_standard_configs
 )
-:: Доп категория
+
 set "extra_category="
 setlocal enabledelayedexpansion
 for /l %%i in (1, 1, %total_categories%) do (
@@ -476,7 +500,6 @@ if defined current_cfg (
     set /a config_count+=1
 )
 goto :eof
-:: Я хочу пиццы
 
 :simple_config_selector_all
 set "cat=%~1"
@@ -527,7 +550,6 @@ for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
         for %%f in ("!fullpath!") do set "basename=%%~nxf"
         set "basename=!basename:~0,-5!"
 
-        :: ВЫРАВНИВАЕМ НОМЕРА(Не работает. Похуй, потом починю)
         set "display_index=  !index!"
         set "display_index=!display_index:~-2!"
         echo  !display_index! - !basename!
@@ -564,6 +586,8 @@ goto show_simple_menu_all
 
 :configs_launched
 timeout /t 3 >nul
+
+:configs_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
@@ -573,13 +597,15 @@ echo.
 echo Запущено конфигов: %config_count%
 echo Запущены конфиги: %active_configs%
 echo.
-if "%USE_IPSET%"=="1" (
-    echo  [95mipset включен[0m
+if "%USE_IPSET_GLOBAL%"=="1" (
+    echo  [95mipset global включен[0m
+) else if "%USE_IPSET_GAMING%"=="1" (
+    echo  [95mipset gaming включен[0m
 ) else (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo  [95mЛоги включены - окна WinWS открыты[0m
+    echo  [93mЛоги включены - окна WinWS открыты[0m
 )
 echo.
 echo  1 - Перезапустить конфиги
@@ -594,8 +620,10 @@ if "%choice%"=="2" (
     goto main_loop
 )
 if "%choice%"=="3" goto exit
-goto main_loop
 
+echo Неверный выбор!
+timeout /t 2 >nul
+goto configs_loop
 
 :launch_multi_config
 cls
@@ -847,6 +875,8 @@ goto show_simple_menu
 
 :multi_configs_launched
 timeout /t 3 >nul
+
+:multi_configs_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
@@ -856,13 +886,15 @@ echo.
 echo Запущено конфигов: %config_count%
 echo Запущены конфиги: %active_configs%
 echo.
-if "%USE_IPSET%"=="1" (
-    echo  [95mipset включен[0m
+if "%USE_IPSET_GLOBAL%"=="1" (
+    echo  [95mipset global включен[0m
+) else if "%USE_IPSET_GAMING%"=="1" (
+    echo  [95mipset gaming включен[0m
 ) else (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo  [95mЛоги включены - окна WinWS открыты[0m
+    echo  [93mЛоги включены - окна WinWS открыты[0m
 )
 echo.
 echo  1 - Остановить Zapret и выбрать другие конфиги
@@ -880,50 +912,35 @@ if "%choice%"=="2" (
     goto main_loop
 )
 if "%choice%"=="3" goto exit
-goto main_loop
 
-:run_selected_configs
-set "configs_to_run=%~1"
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ЗАПУСК КОНФИГОВ                            ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo Останавливаю Zapret...
-taskkill /f /im winws.exe >nul 2>&1
-timeout /t 1 >nul
+echo Неверный выбор!
+timeout /t 2 >nul
+goto multi_configs_loop
 
-set "active_configs="
-set "run_count=0"
-setlocal enabledelayedexpansion
+:create_dynamic_bat
+set "source_bat=%~1"
+set "target_bat=%~2"
 
-for %%c in (!configs_to_run!) do (
-    for %%f in ("%%c") do (
-        echo Запускаю: %%~nf
-        if "!SHOW_LOGS!"=="1" (
-            start "Zapret_%%~nf" "bin\winws.exe" @"%%c"
-        ) else (
-            start "Zapret_%%~nf" /B "bin\winws.exe" @"%%c"
-        )
-        if defined active_configs (
-            set "active_configs=!active_configs!, %%~nf"
-        ) else (
-            set "active_configs=%%~nf"
-        )
-        set /a run_count+=1
-    )
+if not exist "%source_bat%" (
+    echo Исходный bat-файл не найден: %source_bat%
+    exit /b 1
 )
 
-endlocal & set "active_configs=%active_configs%" & set "config_count=%run_count%"
-goto :eof
+:: папка для динамических bat-файлов если нету
+if not exist "%TEMP_DIR%\dynamic_configs" mkdir "%TEMP_DIR%\dynamic_configs" >nul 2>&1
 
-:trim_spaces
-set "var_name=%~1"
+type nul > "%target_bat%"
+
 setlocal enabledelayedexpansion
-set "value=!%var_name%!"
-set "value=!value: =!"
-endlocal & set "%var_name%=%value%"
+for /f "usebackq delims=" %%a in ("%source_bat%") do (
+    set "line=%%a"
+    :: Удаляем строки с ipset
+    echo "!line!" | findstr /i /c:"ipset=" >nul
+    if errorlevel 1 (
+        echo !line! >> "%target_bat%"
+    )
+)
+endlocal
 goto :eof
 
 :launch_bat_file
@@ -1063,18 +1080,32 @@ timeout /t 1 >nul
 
 for %%f in ("%selected_bat_path%") do set "bat_name=%%~nf"
 
-echo Запускаю bat-файл: %bat_name%
-
-if "%SHOW_LOGS%"=="1" (
-    start "Zapret_Bat_%bat_name%" "bin\winws.exe" @"%selected_bat_path%"
+:: Создаем динамический bat-файл если ipset global выключен
+setlocal enabledelayedexpansion
+if "!USE_IPSET_GLOBAL!"=="0" (
+    echo Создаю динамический bat-файл без ipset правил...
+    set "dynamic_bat=!TEMP_DIR!\dynamic_configs\!bat_name!.bat"
+    call :create_dynamic_bat "!selected_bat_path!" "!dynamic_bat!"
+    set "bat_to_run=!dynamic_bat!"
 ) else (
-    start "Zapret_Bat_%bat_name%" /B "bin\winws.exe" @"%selected_bat_path%"
+    set "bat_to_run=!selected_bat_path!"
 )
+
+echo Запускаю bat-файл: !bat_name!
+
+if "!SHOW_LOGS!"=="1" (
+    start "Zapret_Bat_!bat_name!" "bin\winws.exe" @"!bat_to_run!"
+) else (
+    start "Zapret_Bat_!bat_name!" /B "bin\winws.exe" @"!bat_to_run!"
+)
+endlocal
 
 goto bat_launched
 
 :bat_launched
 timeout /t 3 >nul
+
+:bat_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
@@ -1083,13 +1114,13 @@ echo  ╚═══════════════════════�
 echo.
 echo Запущен bat-файл: %bat_name%
 echo.
-if "%USE_IPSET%"=="1" (
-    echo  [95mipset включен[0m
+if "%USE_IPSET_GLOBAL%"=="1" (
+    echo  [95mipset global включен[0m
 ) else (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo  [95mЛоги включены - окно WinWS открыто[0m
+    echo  [93mЛоги включены - окно WinWS открыто[0m
 )
 echo.
 echo  1 - Остановить Zapret и выбрать другой bat-файл
@@ -1097,9 +1128,6 @@ echo  2 - Остановить Zapret и вернуться в меню
 echo  3 - Остановить Zapret и выйти
 echo.
 set /p choice="Выберите действие [1-3]: "
-
-if exist "%TEMP_DIR%\bat_list.txt" del "%TEMP_DIR%\bat_list.txt" >nul 2>&1
-if exist "%TEMP_DIR%\bat_paths.txt" del "%TEMP_DIR%\bat_paths.txt" >nul 2>&1
 
 if "%choice%"=="1" (
     taskkill /f /im winws.exe >nul 2>&1
@@ -1110,29 +1138,106 @@ if "%choice%"=="2" (
     goto main_loop
 )
 if "%choice%"=="3" goto exit
-goto main_loop
 
-:exit
+echo Неверный выбор!
+timeout /t 2 >nul
+goto bat_loop
+
+:run_selected_configs
+set "configs_to_run=%~1"
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                       ВЫХОД                                  ║
+echo  ║                   ЗАПУСК КОНФИГОВ                            ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Останавливаю Zapret...
 taskkill /f /im winws.exe >nul 2>&1
-taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
-timeout /t 2 >nul
+timeout /t 1 >nul
 
-echo Очищаю DNS кэш...
-ipconfig /flushdns >nul 2>&1
+set "active_configs="
+set "run_count=0"
+setlocal enabledelayedexpansion
 
-echo Zapret остановлен
-echo.
-if exist "%TEMP_DIR%\temp_*.txt" del "%TEMP_DIR%\temp_*.txt" >nul 2>&1
-if exist "%TEMP_DIR%\*_paths.txt" del "%TEMP_DIR%\*_paths.txt" >nul 2>&1
-timeout /t 2 >nul
-exit
+:: Создаем временную папку для динамических конфигов
+if not exist "%TEMP_DIR%\dynamic_configs" mkdir "%TEMP_DIR%\dynamic_configs" >nul 2>&1
+
+for %%c in (%configs_to_run%) do (
+    for %%f in ("%%c") do (
+        set "config_name=%%~nf"
+        set "dynamic_config=%TEMP_DIR%\dynamic_configs\!config_name!.conf"
+        
+        :: Определяем какой ipset использовать для этого конфига
+        set "use_ipset=!USE_IPSET_GLOBAL!"
+        :: Проверяем и по имени конфига и по папке
+        echo "!config_name!" | findstr /i "gaming" >nul
+        if !errorlevel!==0 (
+            set "use_ipset=!USE_IPSET_GAMING!"
+        ) else (
+            :: Проверяем путь к конфигу - если он в папке gaming
+            echo "%%c" | findstr /i "\\gaming\\" >nul
+            if !errorlevel!==0 (
+                set "use_ipset=!USE_IPSET_GAMING!"
+            )
+        )
+        
+        :: Создаем динамический конфиг
+        call :create_dynamic_config "%%c" "!dynamic_config!" "!use_ipset!"
+        
+        echo Запускаю: !config_name!
+        if "!SHOW_LOGS!"=="1" (
+            start "Zapret_!config_name!" "bin\winws.exe" @"!dynamic_config!"
+        ) else (
+            start "Zapret_!config_name!" /B "bin\winws.exe" @"!dynamic_config!"
+        )
+        
+        if defined active_configs (
+            set "active_configs=!active_configs!, !config_name!"
+        ) else (
+            set "active_configs=!config_name!"
+        )
+        set /a run_count+=1
+    )
+)
+
+endlocal & set "active_configs=%active_configs%" & set "config_count=%run_count%"
+goto :eof
+
+:create_dynamic_config
+set "source_config=%~1"
+set "target_config=%~2"
+set "use_ipset=%~3"
+
+if not exist "%source_config%" (
+    echo Исходный конфиг не найден: %source_config%
+    exit /b 1
+)
+
+if "%use_ipset%"=="1" (
+    copy "%source_config%" "%target_config%" >nul
+) else (
+    type nul > "%target_config%"
+    
+    setlocal enabledelayedexpansion
+    for /f "usebackq delims=" %%a in ("%source_config%") do (
+        set "line=%%a"
+        :: Удаляем строки с ЛЮБЫМ ipset (и global и gaming)
+        echo "!line!" | findstr /i /c:"ipset=" >nul
+        if errorlevel 1 (
+            echo !line! >> "%target_config%"
+        )
+    )
+    endlocal
+)
+goto :eof
+
+:trim_spaces
+set "var_name=%~1"
+setlocal enabledelayedexpansion
+set "value=!%var_name%!"
+set "value=!value: =!"
+endlocal & set "%var_name%=%value%"
+goto :eof
 
 :extract_number
 set "str=%~1"
@@ -1181,3 +1286,26 @@ for /l %%i in (0,1,1000) do (
 )
 endlocal & set "%2=%len%"
 goto :eof
+
+:exit
+cls
+echo.
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║                       ВЫХОД                                  ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo Останавливаю Zapret...
+taskkill /f /im winws.exe >nul 2>&1
+taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
+timeout /t 2 >nul
+
+echo Очищаю DNS кэш...
+ipconfig /flushdns >nul 2>&1
+
+echo Zapret остановлен
+echo.
+if exist "%TEMP_DIR%\temp_*.txt" del "%TEMP_DIR%\temp_*.txt" >nul 2>&1
+if exist "%TEMP_DIR%\*_paths.txt" del "%TEMP_DIR%\*_paths.txt" >nul 2>&1
+if exist "%TEMP_DIR%\dynamic_configs" rd /s /q "%TEMP_DIR%\dynamic_configs" >nul 2>&1
+timeout /t 2 >nul
+exit
