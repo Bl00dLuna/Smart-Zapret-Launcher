@@ -231,7 +231,7 @@ amzndns.com
 amzndns.net
 amzndns.org
 
-# Akamai
+# Akami
 akamai.net
 akamaized.net
 akamaiedge.net
@@ -244,6 +244,3 @@ play.google.com
 play.google.ru
 metacritic.com
 myanimelist.net
-mega.nz
-mega.co.nz
-mega.io

@@ -2,6 +2,7 @@
 2ip.ru
 3dnews.ru
 avito.ru
+akamaitechnologies.com
 alfabank.ru
 citilink.ru
 dns-shop.ru
@@ -19,11 +20,14 @@ multimc.org
 playground.ru
 ok.ru
 ozon.ru
+rf4game.com
+rf4game.ru
 sberbank.ru
 tbank.ru
 vk.com
 vtb.ru
 wildberries.ru
 ya.ru
+yandex.com
 yandex.kz
 yandex.ru

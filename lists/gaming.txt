@@ -1,14 +1,44 @@
-# Epic game store
+# Epic Games Store
+epicgames.com
 unrealengine.com
-unrealtournament.com
+store.epicgames.com
+graph.epicgames.com
+download.epicgames.com
+tracking.epicgames.com
+ecommerce.epicgames.com
+lightswitch-public-service-prod06.ol.epicgames.com
+lightswitch-public-service-prod.ol.epicgames.com
+service.ol.epicgames.com
+account-public-service-prod03.ol.epicgames.com
+account-public-service-prod.ol.epicgames.com
+launcher-public-service-prod06.ol.epicgames.com
+datarouter.ol.epicgames.com
+friends-public-service-prod06.ol.epicgames.com
+presence-public-service-prod06.ol.epicgames.com
+party-service-prod06.ol.epicgames.com
+achievements-public-service-prod06.ol.epicgames.com
+gcs.api.ecommerce.epicgames.com
+api.epicgames.dev
+epic-social-game.modules.ecommerce.epicgames.com
+cdn2.unrealengine.com
+cdn1.unrealengine.com
+wex-public-service-prod.ol.epicgames.com
+wex-public-service-live-prod.ol.epicgames.com
+wex-public-service-liveplatform-prod.ol.epicgames.com
 
 # Fortnite
 fortnite.com
 fortnite-vod.akamaized.net
 
 # Ubisoft Connect
-ubisoftconnect.com
+ubisoft.com
 uplay.com
+ubi.com
+ubisoft.connect.com
+uplaypc-s-ubiservices.ubi.com
+public-ubiservices.ubi.com
+nimbus.ubisoft.com
+ubisoft-orbit-savegames.s3.amazonaws.com
 
 # EA App / Origin
 origin.com
@@ -45,13 +75,13 @@ rtm.tnt-ea.com
 
 # Xbox
 gamepass.com
+tellmewhygame.com
 start.ui.xboxlive.com
 profile.xboxlive.com
 login.microsoftonline.com
 login.live.com
 auth.xboxlive.com
 xsts.auth.xboxlive.com
-xbx.lv
 xbox.co
 xbox.com
 xbox.eu
@@ -98,14 +128,6 @@ callersbane.com
 minecraft-services.net
 minecraftservices.com
 minecraftshop.com
-hypixel.net
-eu.hypixel.net
-mc.hypixel.net
-cdn.modrinth.com
-modrinth.com
-modrinth.gg
-essential.gg
-sparkuniverse.com
 
 # Apex Legends
 apexlegends.com
