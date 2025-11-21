@@ -1,11 +1,14 @@
---wf-tcp=80,443,2053,2083,2087,2096,8443,993,995,5222,5223 --wf-udp=443,3478-3480,50000-50100,1194,500,4500
---filter-tcp=2053,2083,2087,2096,8443 --hostlist="lists\discord.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=500000 --dpi-desync-autottl=1 --new
+--wf-tcp=80,443,2053,2083,2087,2096,8443,5222,5223 --wf-udp=443,3478-3480,50000-50100,1194,4500
+--filter-tcp=2053,2083,2087,2096,8443 --hostlist="lists\discord.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=500000 --dpi-desync-autottl=1 --dpi-desync-fake-tls="bin\tls_clienthello_www_google_com.bin" --new
 --filter-udp=3478-3480,50000-50100 --filter-l7=discord,stun --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=400000 --dpi-desync-autottl=1 --new
---filter-tcp=80,443 --hostlist="lists\discord.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fooling=ts --dpi-desync-ts-increment=-100000 --dpi-desync-autottl=1 --new
+--filter-tcp=443 --hostlist="lists\discord.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=ts --dpi-desync-ts-increment=-100000 --dpi-desync-autottl=1 --new
 --filter-udp=443 --hostlist="lists\discord.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fake-quic="bin\quic_initial_www_google_com.bin" --dpi-desync-autottl=1 --new
---filter-tcp=80,443 --hostlist="lists\youtube_twitch.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2000000 --dpi-desync-repeats=3 --new
+--filter-tcp=80 --hostlist="lists\discord.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=ts --dpi-desync-ts-increment=-100000 --dpi-desync-autottl=1 --new
+--filter-tcp=443 --hostlist="lists\youtube_twitch.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2000000 --dpi-desync-repeats=3 --new
 --filter-udp=443 --hostlist="lists\youtube_twitch.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fake-quic="bin\quic_initial_www_google_com.bin" --new
---filter-tcp=80,443 --hostlist="lists\black-list.txt" --hostlist-exclude="lists\white-list.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1800000 --dpi-desync-repeats=3 --new
---filter-udp=443 --hostlist="lists\black-list.txt" --hostlist-exclude="lists\white-list.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fake-quic="bin\quic_initial_www_google_com.bin" --new
---filter-tcp=993,995,5222,5223 --ipset="lists\ipset-global.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1500000 --dpi-desync-repeats=2 --new
---filter-udp=1194,500,4500 --ipset="lists\ipset-global.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1200000 --new
+--filter-tcp=80 --hostlist="lists\youtube_twitch.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=2000000 --dpi-desync-repeats=3 --new
+--filter-tcp=443 --hostlist="lists\black-list.txt" --hostlist-exclude="lists\white-list.txt" --ipset="lists\ipset-global.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1800000 --dpi-desync-repeats=3 --new
+--filter-udp=443 --hostlist="lists\black-list.txt" --hostlist-exclude="lists\white-list.txt" --ipset="lists\ipset-global.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fake-quic="bin\quic_initial_www_google_com.bin" --new
+--filter-tcp=80 --hostlist="lists\black-list.txt" --hostlist-exclude="lists\white-list.txt" --ipset="lists\ipset-global.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1800000 --dpi-desync-repeats=3 --new
+--filter-tcp=5222,5223 --ipset="lists\ipset-global.txt" --dpi-desync=multidisorder --dpi-desync-split-pos=1 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1500000 --dpi-desync-repeats=2 --new
+--filter-udp=1194,4500 --ipset="lists\ipset-global.txt" --dpi-desync=fake --dpi-desync-repeats=2 --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1200000 --new
