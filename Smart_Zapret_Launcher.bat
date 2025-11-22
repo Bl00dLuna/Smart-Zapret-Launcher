@@ -2,6 +2,22 @@
 chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
+
+set "LOCAL_VERSION=1.23"
+set "GITHUB_USER=Bl00dLuna"
+set "GITHUB_REPO=Smart-Zapret-Launcher"
+set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
+set "REPO_URL=https://github.com/%GITHUB_USER%/%GITHUB_REPO%"
+
+:: ЧИСТКА ПРИ СТАРТЕ (При закрытии крестиком)
+taskkill /f /im winws.exe >nul 2>&1
+taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
+if exist "%~dp0temporary\dynamic_configs" (
+    del /q "%~dp0temporary\dynamic_configs\*.conf" >nul 2>&1
+    del /q "%~dp0temporary\dynamic_configs\*.bat" >nul 2>&1
+    rd /q "%~dp0temporary\dynamic_configs" >nul 2>&1
+)
+
 set "IS_ADMIN=0"
 
 :: Проверка прав админа
@@ -45,6 +61,34 @@ set "IPSET_GAMING_SETTING=%TEMP_DIR%\ipset_gaming_setting.txt"
 set "IPSET_GLOBAL_FILE=lists\ipset-global.txt"
 set "IPSET_GAMING_FILE=lists\ipset-gaming.txt"
 
+:: Настройка цветов (авто-откл на Win7,8)
+set "COL_RED="
+set "COL_GRN="
+set "COL_YEL="
+set "COL_BLU="
+set "COL_MAG="
+set "COL_CYA="
+set "COL_GRY="
+set "COL_WHT="
+set "COL_RST="
+
+:: Определение Win
+for /f "tokens=4-5 delims=. " %%i in ('ver') do set VERSION=%%i.%%j
+
+:: Если Win 10 или 11
+if "%VERSION%" == "10.0" (
+    for /F %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
+    call set "COL_GRY=%%ESC%%[90m"
+    call set "COL_RED=%%ESC%%[91m"
+    call set "COL_GRN=%%ESC%%[92m"
+    call set "COL_YEL=%%ESC%%[93m"
+    call set "COL_BLU=%%ESC%%[94m"
+    call set "COL_MAG=%%ESC%%[95m"
+    call set "COL_CYA=%%ESC%%[96m"
+    call set "COL_WHT=%%ESC%%[97m"
+    call set "COL_RST=%%ESC%%[0m"
+)
+
 :: Создаем папку для временных файлов если нет
 if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%" >nul 2>&1
 
@@ -76,37 +120,8 @@ if not defined USE_IPSET_GAMING (
     )
 )
 
-:: Инициализация ipset файлов
-if not exist "%IPSET_GLOBAL_FILE%.backup" (
-    if exist "%IPSET_GLOBAL_FILE%" (
-        copy "%IPSET_GLOBAL_FILE%" "%IPSET_GLOBAL_FILE%.backup" >nul
-    ) else (
-        echo. > "%IPSET_GLOBAL_FILE%"
-        echo. > "%IPSET_GLOBAL_FILE%.backup"
-    )
-)
-
-if not exist "%IPSET_GAMING_FILE%.backup" (
-    if exist "%IPSET_GAMING_FILE%" (
-        copy "%IPSET_GAMING_FILE%" "%IPSET_GAMING_FILE%.backup" >nul
-    ) else (
-        echo. > "%IPSET_GAMING_FILE%"
-        echo. > "%IPSET_GAMING_FILE%.backup"
-    )
-)
-
-:: Применяем текущие настройки ipset
-if "%USE_IPSET_GLOBAL%"=="1" (
-    call :enable_ipset_global
-) else (
-    call :disable_ipset_global
-)
-
-if "%USE_IPSET_GAMING%"=="1" (
-    call :enable_ipset_gaming
-) else (
-    call :disable_ipset_gaming
-)
+:: Проверка апдейт 4 часа
+call :check_updates_startup
 
 :: Проверка Zapret и папок
 if not exist "bin\winws.exe" (
@@ -137,35 +152,35 @@ set "choice="
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              SMART ZAPRET LAUNCHER v1.22                     ║
+echo  ║              SMART ZAPRET LAUNCHER v%LOCAL_VERSION%                     ║
 echo  ║                   by Bl00dLuna                               ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 if "%USE_IPSET_GLOBAL%"=="1" (
-    echo  [95mi - Использовать ipset global [ВКЛ] [0m [Действует на universal конфиги и bat-файлы]
+    echo  %COL_MAG%i - Использовать ipset global [ВКЛ]  %COL_RST% [Действует на universal конфиги и bat-файлы]
 ) else (
-    echo  [95mi - Использовать ipset global [ВЫКЛ] [0m [Действует на universal конфиги и bat-файлы]
+    echo  %COL_MAG%i - Использовать ipset global [ВЫКЛ]  %COL_RST% [Действует на universal конфиги и bat-файлы]
 )
 if "%USE_IPSET_GAMING%"=="1" (
-    echo  [95mg - Использовать ipset gaming [ВКЛ] [0m [Действует только на gaming конфиги]
+    echo  %COL_MAG%g - Использовать ipset gaming [ВКЛ]  %COL_RST% [Действует только на gaming конфиги]
 ) else (
-    echo  [95mg - Использовать ipset gaming [ВЫКЛ] [0m [Действует только на gaming конфиги]
+    echo  %COL_MAG%g - Использовать ipset gaming [ВЫКЛ]  %COL_RST% [Действует только на gaming конфиги]
 )
 echo.
 if "%SHOW_LOGS%"=="1" (
-    echo  [93ml - Включить логи [ВКЛ][0m
+    echo  %COL_YEL%l - Включить логи [ВКЛ] %COL_RST%
 ) else (
-    echo  [93ml - Включить логи [ВЫКЛ][0m
+    echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
 )
 echo.
-echo  [92m1 - Запустить Zapret (все конфиги) [Рекомендовано для постоянного использования][0m
-echo  [92m2 - Запустить Zapret (отдельные конфиги) [Рекомендовано для тестирования и запуска определённых конфигов][0m
+echo  %COL_GRN%1 - Запустить Zapret (все конфиги) [Рекомендовано для постоянного использования] %COL_RST%
+echo  %COL_GRN%2 - Запустить Zapret (отдельные конфиги) [Рекомендовано для тестирования и запуска определённых конфигов] %COL_RST%
 echo.
-echo  [91m3 - Запустить Zapret (bat-файл) [Старый способ обхода][0m
+echo  %COL_RED%3 - Запустить Zapret (bat-файл) [Старый способ обхода] %COL_RST%
 echo.
 echo  0 - Выйти
 echo.
-echo  [94mm - Открыть папку с инструкциями[0m
+echo  %COL_BLU%m - Открыть папку с инструкциями %COL_RST%
 echo.
 set /p choice="Выберите действие [0-3] или опцию [i,g,l,m]: "
 
@@ -184,14 +199,11 @@ goto main_loop
 :toggle_ipset_global
 if "%USE_IPSET_GLOBAL%"=="1" (
     set "USE_IPSET_GLOBAL=0"
-    echo Выключаю ipset global...
-    call :disable_ipset_global
+    echo ipset global выключен
 ) else (
     set "USE_IPSET_GLOBAL=1"
     set "USE_IPSET_GAMING=0"
-    echo Включаю ipset global...
-    call :enable_ipset_global
-    call :disable_ipset_gaming
+    echo ipset global включен
 )
 echo | set /p="%USE_IPSET_GLOBAL%" > "%IPSET_GLOBAL_SETTING%"
 echo | set /p="%USE_IPSET_GAMING%" > "%IPSET_GAMING_SETTING%"
@@ -202,40 +214,17 @@ goto main_loop
 :toggle_ipset_gaming
 if "%USE_IPSET_GAMING%"=="1" (
     set "USE_IPSET_GAMING=0"
-    echo Выключаю ipset gaming...
-    call :disable_ipset_gaming
+    echo ipset gaming выключен
 ) else (
     set "USE_IPSET_GAMING=1"
     set "USE_IPSET_GLOBAL=0"
-    echo Включаю ipset gaming...
-    call :enable_ipset_gaming
-    call :disable_ipset_global
+    echo ipset gaming включен
 )
 echo | set /p="%USE_IPSET_GLOBAL%" > "%IPSET_GLOBAL_SETTING%"
 echo | set /p="%USE_IPSET_GAMING%" > "%IPSET_GAMING_SETTING%"
 echo Настройка сохранена
 timeout /t 1 >nul
 goto main_loop
-
-:disable_ipset_global
-echo. > "%IPSET_GLOBAL_FILE%"
-goto :eof
-
-:enable_ipset_global
-if exist "%IPSET_GLOBAL_FILE%.backup" (
-    copy "%IPSET_GLOBAL_FILE%.backup" "%IPSET_GLOBAL_FILE%" >nul
-)
-goto :eof
-
-:disable_ipset_gaming
-echo. > "%IPSET_GAMING_FILE%"
-goto :eof
-
-:enable_ipset_gaming
-if exist "%IPSET_GAMING_FILE%.backup" (
-    copy "%IPSET_GAMING_FILE%.backup" "%IPSET_GAMING_FILE%" >nul
-)
-goto :eof
 
 :toggle_logs
 if "%SHOW_LOGS%"=="1" (
@@ -549,10 +538,7 @@ for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
         set "basename=!fullpath!"
         for %%f in ("!fullpath!") do set "basename=%%~nxf"
         set "basename=!basename:~0,-5!"
-
-        set "display_index=  !index!"
-        set "display_index=!display_index:~-2!"
-        echo  !display_index! - !basename!
+        echo !index! - !basename!
         echo !index!:!basename!>> "%TEMP_DIR%\current_configs_all.txt"
         set /a index+=1
     )
@@ -598,14 +584,14 @@ echo Запущено конфигов: %config_count%
 echo Запущены конфиги: %active_configs%
 echo.
 if "%USE_IPSET_GLOBAL%"=="1" (
-    echo  [95mipset global включен[0m
+    echo   %COL_MAG%ipset global включен %COL_RST%
 ) else if "%USE_IPSET_GAMING%"=="1" (
-    echo  [95mipset gaming включен[0m
+    echo   %COL_MAG%ipset gaming включен %COL_RST%
 ) else (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo  [93mЛоги включены - окна WinWS открыты[0m
+    echo   %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
 echo  1 - Перезапустить конфиги
@@ -887,14 +873,14 @@ echo Запущено конфигов: %config_count%
 echo Запущены конфиги: %active_configs%
 echo.
 if "%USE_IPSET_GLOBAL%"=="1" (
-    echo  [95mipset global включен[0m
+    echo   %COL_MAG%ipset global включен %COL_RST%
 ) else if "%USE_IPSET_GAMING%"=="1" (
-    echo  [95mipset gaming включен[0m
+    echo   %COL_MAG%ipset gaming включен %COL_RST%
 ) else (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo  [93mЛоги включены - окна WinWS открыты[0m
+    echo   %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
 echo  1 - Остановить Zapret и выбрать другие конфиги
@@ -916,76 +902,6 @@ if "%choice%"=="3" goto exit
 echo Неверный выбор!
 timeout /t 2 >nul
 goto multi_configs_loop
-
-:create_dynamic_bat
-set "source_bat=%~1"
-set "target_bat=%~2"
-set "use_ipset=%~3"
-
-if not exist "%source_bat%" (
-    echo Исходный bat-файл не найден: %source_bat%
-    exit /b 1
-)
-
-if not exist "%TEMP_DIR%\dynamic_configs" mkdir "%TEMP_DIR%\dynamic_configs" >nul 2>&1
-
-type nul > "%target_bat%"
-
-setlocal enabledelayedexpansion
-for /f "usebackq delims=" %%a in ("%source_bat%") do (
-    set "line=%%a"
-    
-    :: Маскируем запятые
-    set "line=!line:,=##COMMA##!"
-    
-    :: Обрабатываем строку по частям
-    set "processed_line="
-    set "skip_next=0"
-    
-    for %%b in (!line!) do (
-        if !skip_next! equ 0 (
-            if "%%b"=="--ipset" (
-                if "!use_ipset!"=="0" (
-                    :: Ipset ВЫКЛЮЧЕН - пропускаем параметр ipset
-                    set "skip_next=1"
-                ) else (
-                    :: Ipset ВКЛЮЧЕН оставляем параметр ipset
-                    set "processed_line=!processed_line! %%b"
-                )
-            ) else if "%%b"=="--hostlist" (
-                if "!use_ipset!"=="1" (
-                    :: Ipset ВКЛЮЧЕН - пропускаем параметр hostlist
-                    set "skip_next=1"
-                ) else (
-                    :: Ipset ВЫКЛЮЧЕН - оставляем параметр hostlist
-                    set "processed_line=!processed_line! %%b"
-                )
-            ) else if "%%b"=="--hostlist-exclude" (
-                if "!use_ipset!"=="1" (
-                    :: Ipset ВКЛЮЧЕН - пропускаем параметр hostlist-exclude
-                    set "skip_next=1"
-                ) else (
-                    :: Ipset ВЫКЛЮЧЕН - оставляем параметр hostlist-exclude
-                    set "processed_line=!processed_line! %%b"
-                )
-            ) else (
-                set "processed_line=!processed_line! %%b"
-            )
-        ) else (
-            set "skip_next=0"
-        )
-    )
-    
-    ::Убираем робел
-    if defined processed_line set "processed_line=!processed_line:~1!"
-    
-    ::Возвращаем запятые
-    if defined processed_line set "processed_line=!processed_line:##COMMA##=,!"
-    
-    echo !processed_line! >> "%target_bat%"
-)
-endlocal
-goto :eof
 
 :launch_bat_file
 cls
@@ -1126,9 +1042,8 @@ for %%f in ("%selected_bat_path%") do set "bat_name=%%~nf"
 
 :: Создаем динамический bat-файл с учетом ipset
 setlocal enabledelayedexpansion
-echo Создаю динамический bat-файл...
 set "dynamic_bat=!TEMP_DIR!\dynamic_configs\!bat_name!.bat"
-call :create_dynamic_bat "!selected_bat_path!" "!dynamic_bat!" "!USE_IPSET_GLOBAL!"
+call :create_dynamic_file "!selected_bat_path!" "!dynamic_bat!" "!USE_IPSET_GLOBAL!"
 set "bat_to_run=!dynamic_bat!"
 
 echo Запускаю bat-файл: !bat_name!
@@ -1155,12 +1070,12 @@ echo.
 echo Запущен bat-файл: %bat_name%
 echo.
 if "%USE_IPSET_GLOBAL%"=="1" (
-    echo  [95mipset global включен[0m
+    echo   %COL_MAG%ipset global включен %COL_RST%
 ) else (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo  [93mЛоги включены - окно WinWS открыто[0m
+    echo   %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
 echo  1 - Остановить Zapret и выбрать другой bat-файл
@@ -1199,32 +1114,58 @@ set "active_configs="
 set "run_count=0"
 setlocal enabledelayedexpansion
 
-:: Создаем временную папку для динамических конфигов
+:: Создаем папку для динамических конфигов
 if not exist "%TEMP_DIR%\dynamic_configs" mkdir "%TEMP_DIR%\dynamic_configs" >nul 2>&1
 
 for %%c in (%configs_to_run%) do (
     for %%f in ("%%c") do (
         set "config_name=%%~nf"
-        set "dynamic_config=%TEMP_DIR%\dynamic_configs\!config_name!.conf"
-        :: Определяем какой ipset использовать для этого конфига
-        set "use_ipset=!USE_IPSET_GLOBAL!"
-        :: Проверяем gaming конфиг по пути и имени
+        set "source_path=%%c"
+        
+        :: будем запускать ОРИГИНАЛЬНЫЙ файл
+        set "final_path=%%c"
+        set "need_processing=0"
+        set "target_ipset="
+        
+        :: Проверки папок (Universal/Gaming)
+        echo "%%c" | findstr /i "\\universal\\" >nul
+        if !errorlevel! equ 0 (
+            set "need_processing=1"
+            set "target_ipset=!USE_IPSET_GLOBAL!"
+        )
         echo "%%c" | findstr /i "\\gaming\\" >nul
         if !errorlevel! equ 0 (
-            set "use_ipset=!USE_IPSET_GAMING!"
+            set "need_processing=1"
+            set "target_ipset=!USE_IPSET_GAMING!"
         )
         echo "!config_name!" | findstr /i "gaming" >nul  
         if !errorlevel! equ 0 (
-            set "use_ipset=!USE_IPSET_GAMING!"
+            set "need_processing=1"
+            set "target_ipset=!USE_IPSET_GAMING!"
         )
-        :: Создаем динамический конфиг
-        call :create_dynamic_config "%%c" "!dynamic_config!" "!use_ipset!"
         
-        echo Запускаю: !config_name!
-        if "!SHOW_LOGS!"=="1" (
-            start "Zapret_!config_name!" "bin\winws.exe" @"!dynamic_config!"
+        if "!need_processing!"=="1" (
+            :: ДИНАМИЧЕСКИЙ КОНФИГ
+            set "dynamic_path=%TEMP_DIR%\dynamic_configs\!config_name!.conf"
+            call :create_dynamic_file "!source_path!" "!dynamic_path!" "!target_ipset!"
+            set "final_path=!dynamic_path!"
+            
+            echo Запускаю: !config_name!
+            
+            if "!SHOW_LOGS!"=="1" (
+                start "Zapret_!config_name!" cmd /c ""bin\winws.exe" @"!final_path!" & del /q "!final_path!" >nul 2>&1"
+            ) else (
+                start "Zapret_!config_name!" /B cmd /c ""bin\winws.exe" @"!final_path!" & del /q "!final_path!" >nul 2>&1"
+            )
         ) else (
-            start "Zapret_!config_name!" /B "bin\winws.exe" @"!dynamic_config!"
+            :: ОБЫЧНЫЙ КОНФИГ (Discord и др
+            echo Запускаю: !config_name!
+            
+            if "!SHOW_LOGS!"=="1" (
+                start "Zapret_!config_name!" "bin\winws.exe" @"!final_path!"
+            ) else (
+                start "Zapret_!config_name!" /B "bin\winws.exe" @"!final_path!"
+            )
         )
         
         if defined active_configs (
@@ -1239,20 +1180,23 @@ for %%c in (%configs_to_run%) do (
 endlocal & set "active_configs=%active_configs%" & set "config_count=%run_count%"
 goto :eof
 
-:create_dynamic_config
-set "source_config=%~1"
-set "target_config=%~2"
+:create_dynamic_file
+set "source_file=%~1"
+set "target_file=%~2"
 set "use_ipset=%~3"
 
-if not exist "%source_config%" (
-    echo Исходный конфиг не найден: %source_config%
+if not exist "%source_file%" (
+    echo Исходный файл не найден: %source_file%
     exit /b 1
 )
 
-type nul > "%target_config%"
+:: Создаем папку если её нет
+for %%I in ("%target_file%") do if not exist "%%~dpI" mkdir "%%~dpI" >nul 2>&1
+
+type nul > "%target_file%"
 
 setlocal enabledelayedexpansion
-for /f "usebackq delims=" %%a in ("%source_config%") do (
+for /f "usebackq delims=" %%a in ("%source_file%") do (
     set "line=%%a"
     
     :: Маскируем запятые
@@ -1265,26 +1209,26 @@ for /f "usebackq delims=" %%a in ("%source_config%") do (
         if !skip_next! equ 0 (
             if "%%b"=="--ipset" (
                 if "!use_ipset!"=="0" (
-                    :: Ipset ВЫКЛЮЧЕН - пропускаем параметр ipset
+                    :: Ipset ВЫКЛЮЧЕН - пропускаем ipset
                     set "skip_next=1"
                 ) else (
-                    :: Ipset ВКЛЮЧЕН - оставляем параметр ipset
+                    :: Ipset ВКЛЮЧЕН - оставляем ipset
                     set "processed_line=!processed_line! %%b"
                 )
             ) else if "%%b"=="--hostlist" (
                 if "!use_ipset!"=="1" (
-                    :: Ipset ВКЛЮЧЕН - пропускаем параметр hostlist
+                    :: Ipset ВКЛЮЧЕН - пропускаем hostlist
                     set "skip_next=1"
                 ) else (
-                    :: Ipset ВЫКЛЮЧЕН - оставляем параметр hostlist
+                    :: Ipset ВЫКЛЮЧЕН - оставляем hostlist
                     set "processed_line=!processed_line! %%b"
                 )
             ) else if "%%b"=="--hostlist-exclude" (
                 if "!use_ipset!"=="1" (
-                    :: Ipset ВКЛЮЧЕН - пропускаем параметр hostlist-exclude
+                    :: Ipset ВКЛЮЧЕН - пропускаем hostlist-exclude
                     set "skip_next=1"
                 ) else (
-                    :: Ipset ВЫКЛЮЧЕН - оставляем параметр hostlist-exclude
+                    :: Ipset ВЫКЛЮЧЕН - оставляем hostlist-exclude
                     set "processed_line=!processed_line! %%b"
                 )
             ) else (
@@ -1301,7 +1245,7 @@ for /f "usebackq delims=" %%a in ("%source_config%") do (
     :: Возвращаем запятые
     if defined processed_line set "processed_line=!processed_line:##COMMA##=,!"
     
-    echo !processed_line! >> "%target_config%"
+    echo !processed_line! >> "%target_file%"
 )
 endlocal
 goto :eof
@@ -1384,3 +1328,89 @@ if exist "%TEMP_DIR%\*_paths.txt" del "%TEMP_DIR%\*_paths.txt" >nul 2>&1
 if exist "%TEMP_DIR%\dynamic_configs" rd /s /q "%TEMP_DIR%\dynamic_configs" >nul 2>&1
 timeout /t 2 >nul
 exit
+
+:check_updates_startup
+chcp 437 >nul
+
+::  Проверка Ps
+set "HAS_NET_TOOL=0"
+where curl >nul 2>&1 && set "HAS_NET_TOOL=1"
+if "%HAS_NET_TOOL%"=="0" (
+    where powershell >nul 2>&1 && set "HAS_NET_TOOL=2"
+)
+if "%HAS_NET_TOOL%"=="0" goto :end_update_check
+
+:: Проверка таймера (4 часа)
+set "UPDATE_MARKER=%TEMP_DIR%\update_marker"
+if exist "%UPDATE_MARKER%" (
+    if "%HAS_NET_TOOL%"=="2" goto :check_timer_ps
+    goto :check_timer_curl
+)
+goto :do_update_check
+
+:check_timer_ps
+powershell -Command "$limit = (Get-Date).AddHours(-4); $last = (Get-Item '%UPDATE_MARKER%').LastWriteTime; if ($last -gt $limit) { exit 1 }" 2>nul
+if errorlevel 1 goto :end_update_check
+goto :do_update_check
+
+:check_timer_curl
+powershell -Command "exit 0" >nul 2>&1 && (
+     powershell -Command "$limit = (Get-Date).AddHours(-4); $last = (Get-Item '%UPDATE_MARKER%').LastWriteTime; if ($last -gt $limit) { exit 1 }" 2>nul
+     if errorlevel 1 goto :end_update_check
+)
+goto :do_update_check
+
+:do_update_check
+echo Checking for updates...
+
+set "SERVER_VERSION="
+set "TEMP_VER=%TEMP_DIR%\server_version.txt"
+if exist "%TEMP_VER%" del "%TEMP_VER%" >nul 2>&1
+
+:: Скачивание версии (update.txt)
+if "%HAS_NET_TOOL%"=="2" goto :download_ps
+
+:download_curl
+curl -s -L --connect-timeout 3 --max-time 3 "%VERSION_URL%" -o "%TEMP_VER%" >nul 2>&1
+goto :process_version
+
+:download_ps
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { (New-Object System.Net.WebClient).DownloadFile('%VERSION_URL%', '%TEMP_VER%') } catch {}" >nul 2>&1
+goto :process_version
+
+:process_version
+if not exist "%TEMP_VER%" goto :end_update_check
+set /p SERVER_VERSION=<"%TEMP_VER%"
+del "%TEMP_VER%" >nul 2>&1
+
+if not defined SERVER_VERSION goto :end_update_check
+for /f "tokens=1" %%v in ("%SERVER_VERSION%") do set "SERVER_VERSION=%%v"
+
+if "%SERVER_VERSION%"=="" goto :end_update_check
+if "%SERVER_VERSION%"=="%LOCAL_VERSION%" (
+    echo. > "%UPDATE_MARKER%"
+    goto :end_update_check
+)
+
+echo. > "%UPDATE_MARKER%"
+
+chcp 65001 >nul
+
+cls
+echo.
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║              ДОСТУПНО ОБНОВЛЕНИЕ!                            ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo   Текущая версия: %LOCAL_VERSION%
+echo   Новая версия:   %SERVER_VERSION%
+echo.
+set /p "upd_choice= Перейти на страницу Smart Zapret Launcher? [Y/N]: "
+if /i "%upd_choice%"=="Y" (
+    start "" "%REPO_URL%"
+)
+goto :eof
+
+:end_update_check
+chcp 65001 >nul
+goto :eof
