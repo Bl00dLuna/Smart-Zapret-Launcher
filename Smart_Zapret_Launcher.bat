@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.23"
+set "LOCAL_VERSION=1.24"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -122,6 +122,9 @@ if not defined USE_IPSET_GAMING (
 
 :: Проверка апдейт 4 часа
 call :check_updates_startup
+
+:: Проверка конфликтов (VPN, GoodbyeDPI)
+call :check_conflicts
 
 :: Проверка Zapret и папок
 if not exist "bin\winws.exe" (
@@ -1332,7 +1335,7 @@ exit
 :check_updates_startup
 chcp 437 >nul
 
-::  Проверка Ps
+::  Проверка PS
 set "HAS_NET_TOOL=0"
 where curl >nul 2>&1 && set "HAS_NET_TOOL=1"
 if "%HAS_NET_TOOL%"=="0" (
@@ -1413,4 +1416,46 @@ goto :eof
 
 :end_update_check
 chcp 65001 >nul
+goto :eof
+
+:check_conflicts
+setlocal enabledelayedexpansion
+set "conflict_found=0"
+set "conflict_names="
+
+:: Проверка GoodbyeDPI
+tasklist /FI "IMAGENAME eq goodbyedpi.exe" 2>nul | find /i "goodbyedpi.exe" >nul
+if not errorlevel 1 (
+    set "conflict_found=1"
+    set "conflict_names=!conflict_names! [GoodbyeDPI]"
+)
+
+:: Проверка VPN
+for %%p in (openvpn.exe wireguard.exe ProtonVPN.exe tun2socks.exe) do (
+    tasklist /FI "IMAGENAME eq %%p" 2>nul | find /i "%%p" >nul
+    if not errorlevel 1 (
+        set "conflict_found=1"
+        set "conflict_names=!conflict_names! [%%~np]"
+    )
+)
+
+if "!conflict_found!"=="1" (
+    cls
+    echo.
+    echo  %COL_RED%╔══════════════════════════════════════════════════════════════╗%COL_RST%
+    echo  %COL_RED%║                ОБНАРУЖЕН ВОЗМОЖНЫЙ КОНФЛИКТ!                  ║%COL_RST%
+    echo  %COL_RED%╚══════════════════════════════════════════════════════════════╝%COL_RST%
+    echo.
+    echo   Найдены активные процессы, которые могут конфликтовать с Zapret:
+    echo   %COL_YEL%!conflict_names!%COL_RST%
+    echo.
+    echo   Рекомендуется закрыть эти программы, так как их одновременная
+    echo   работа с лаунчером может привести к ошибкам обхода.
+    echo.
+    echo   %COL_GRY%Примечание: Cloudflare WARP игнорируется и не считается конфликтом.%COL_RST%
+    echo.
+    echo   %COL_GRN%Нажмите любую клавишу, чтобы продолжить...%COL_RST%
+    pause >nul
+)
+endlocal
 goto :eof

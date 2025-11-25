@@ -70,6 +70,16 @@ soundcloud.com
 sndcdn.com
 soundcloud.cloud
 
+# Nexus Mods
+nexusmods.com
+supporter-files.nexus-cdn.com
+files.nexus-cdn.com
+
+# Mega(сервис для загрузки файлов)
+mega.nz
+mega.co.nz
+mega.io
+
 # Cloudflare
 embed.cloudflarestream.com
 cloudflare-dns.com
@@ -244,6 +254,3 @@ play.google.com
 play.google.ru
 metacritic.com
 myanimelist.net
-mega.nz
-mega.co.nz
-mega.io
