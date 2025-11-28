@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.24"
+set "LOCAL_VERSION=1.31"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -55,6 +55,7 @@ set "USE_IPSET_GAMING="
 set "TEMP_DIR=%~dp0temporary"
 set "LAST_CONFIGS=%TEMP_DIR%\last_configs.txt"
 set "LAST_CONFIGS_ALL=%TEMP_DIR%\last_configs_all.txt"
+set "AUTORUN_CONFIGS=%TEMP_DIR%\autorun_configs.txt"
 set "LOGS_SETTING=%TEMP_DIR%\logs_setting.txt"
 set "IPSET_GLOBAL_SETTING=%TEMP_DIR%\ipset_global_setting.txt"
 set "IPSET_GAMING_SETTING=%TEMP_DIR%\ipset_gaming_setting.txt"
@@ -120,7 +121,10 @@ if not defined USE_IPSET_GAMING (
     )
 )
 
-:: Проверка апдейт 4 часа
+:: АВТОЗАПУСК
+if "%1"=="--autorun" goto run_autorun_sequence
+
+:: Проверка апдейт 2 часа
 call :check_updates_startup
 
 :: Проверка конфликтов (VPN, GoodbyeDPI)
@@ -152,11 +156,20 @@ set "cat_choice="
 set "input="
 set "choice="
 
+:: ЧЕК АВТОЗАПУСК В МЕНЮ
+set "ar_warning="
+schtasks /query /tn "SmartZapretLauncher_Autorun" >nul 2>&1
+if not errorlevel 1 (
+    if not exist "%AUTORUN_CONFIGS%" (
+        set "ar_warning= %COL_YEL%(ТРЕБУЕТ ОБНОВЛЕНИЯ НАСТРОЕК!)"
+    )
+)
+
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              SMART ZAPRET LAUNCHER v%LOCAL_VERSION%                     ║
-echo  ║                   by Bl00dLuna                               ║
+echo  ║                 SMART ZAPRET LAUNCHER v%LOCAL_VERSION%                  ║
+echo  ║                      by Bl00dLuna                            ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 if "%USE_IPSET_GLOBAL%"=="1" (
@@ -183,18 +196,19 @@ echo  %COL_RED%3 - Запустить Zapret (bat-файл) [Старый спо
 echo.
 echo  0 - Выйти
 echo.
-echo  %COL_BLU%m - Открыть папку с инструкциями %COL_RST%
 echo.
-set /p choice="Выберите действие [0-3] или опцию [i,g,l,m]: "
+echo  %COL_CYA%a - Настройки автозапуска%ar_warning% %COL_RST%
+echo.
+set /p choice="Выберите действие [0-3] или опцию [i,g,l,a]: "
 
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
 if "%choice%"=="2" goto launch_multi_config
 if "%choice%"=="3" goto launch_bat_file
+if /i "%choice%"=="a" goto menu_autorun_settings
 if /i "%choice%"=="i" goto toggle_ipset_global
 if /i "%choice%"=="g" goto toggle_ipset_gaming
 if /i "%choice%"=="l" goto toggle_logs
-if /i "%choice%"=="m" goto open_instructions
 echo Неверный выбор!
 timeout /t 2 >nul
 goto main_loop
@@ -241,15 +255,190 @@ echo | set /p="%SHOW_LOGS%" > "%LOGS_SETTING%"
 timeout /t 1 >nul
 goto main_loop
 
-:open_instructions
-if exist "инструкции\" (
-    echo Открываю папку с инструкциями...
-    explorer "инструкции"
+:menu_autorun_settings
+cls
+echo.
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║                 НАСТРОЙКА АВТОЗАПУСКА                        ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Здесь вы можете выбрать конфиги, которые будут запускаться
+echo  автоматически при включении Windows.
+echo.
+
+:: Проверяем задачу в Win
+set "task_exists=0"
+schtasks /query /tn "SmartZapretLauncher_Autorun" >nul 2>&1
+if not errorlevel 1 set "task_exists=1"
+
+:: Проверяем файл настроек
+set "config_exists=0"
+if exist "%AUTORUN_CONFIGS%" set "config_exists=1"
+
+:: Определяем статус
+if "%task_exists%"=="0" (
+    set "autorun_status=%COL_RED%ОТКЛЮЧЕН%COL_RST%"
 ) else (
-    echo Папка с инструкциями не найдена!
-    timeout /t 2 >nul
+    if "%config_exists%"=="1" (
+        set "autorun_status=%COL_GRN%АКТИВЕН%COL_RST%"
+    ) else (
+        set "autorun_status=%COL_YEL%ТРЕБУЕТ ОБНОВЛЕНИЯ (Файл настроек не найден)%COL_RST%"
+    )
 )
-goto main_loop
+
+echo  Статус: %autorun_status%
+echo.
+
+if "%config_exists%"=="1" (
+    echo  %COL_YEL%Выбраны конфиги для автозапуска:%COL_RST%
+    for /f "tokens=1,* delims=:" %%a in ('type "%AUTORUN_CONFIGS%" 2^>nul') do (
+        echo   - %%b
+    )
+) else (
+    :: Если конфигов нет, чек автозапуск
+    if "%task_exists%"=="1" (
+        echo  %COL_RED%ВНИМАНИЕ: Автозапуск включен в Windows, но список конфигов пуст.%COL_RST%
+        echo  %COL_RED%Возможно, вы переместили лаунчер или обновили версию.%COL_RST%
+        echo  %COL_RED%Нажмите "1", чтобы обновить путь и настройки.%COL_RST%
+    )
+)
+
+echo.
+echo  1 - Создать/Обновить автозагрузку (Выбор конфигов)
+echo  2 - Удалить текущую автозагрузку
+echo.
+echo  B - Вернуться в главное меню
+echo.
+set /p "ar_choice=Выберите действие: "
+
+if /i "%ar_choice%"=="B" goto main_loop
+if "%ar_choice%"=="2" goto disable_autorun
+if "%ar_choice%"=="1" goto setup_autorun_configs
+
+goto menu_autorun_settings
+
+:disable_autorun
+echo.
+echo Удаление задачи из планировщика...
+schtasks /delete /tn "SmartZapretLauncher_Autorun" /f >nul 2>&1
+if exist "%AUTORUN_CONFIGS%" del "%AUTORUN_CONFIGS%" >nul 2>&1
+echo.
+echo %COL_GRN%Автозапуск успешно отключен.%COL_RST%
+timeout /t 2 >nul
+goto menu_autorun_settings
+
+:setup_autorun_configs
+cls
+echo.
+echo  ╔══════════════════════════════════════════════════════════════╗
+echo  ║           ВЫБОР КОНФИГОВ ДЛЯ АВТОЗАПУСКА                     ║
+echo  ╚══════════════════════════════════════════════════════════════╝
+echo.
+echo  Выберите категории:
+echo.
+
+del "%TEMP_DIR%\categories.txt" >nul 2>&1
+setlocal enabledelayedexpansion
+set "category_count=0"
+for /d %%d in ("configs\*") do (
+    set "dir_name=%%~nxd"
+    if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="configs_bat" if /i not "!dir_name!"=="!TEMP_DIR!" (
+        set /a category_count+=1
+        echo !category_count!:!dir_name!>> "%TEMP_DIR%\categories.txt"
+    )
+)
+for /f "tokens=1,2 delims=:" %%a in ('type "%TEMP_DIR%\categories.txt"') do (
+    echo  %%a - %%b
+)
+endlocal
+
+echo.
+echo  B - Назад
+echo.
+set /p "cat_choice_ar=Выберите категории через ПРОБЕЛ: "
+if /i "%cat_choice_ar%"=="B" goto menu_autorun_settings
+
+set "selected_configs="
+set "config_count=0"
+
+setlocal enabledelayedexpansion
+for %%c in (%cat_choice_ar%) do (
+    call :select_config_for_category "%%c"
+)
+endlocal & set "selected_configs=%selected_configs%"
+
+if defined selected_configs (
+    :: Сохраняем список конфигов
+    del "%AUTORUN_CONFIGS%" >nul 2>&1
+    setlocal enabledelayedexpansion
+    set index=1
+    for %%c in (!selected_configs!) do (
+        for %%f in ("%%c") do (
+            set "config_name=%%~nf"
+            set "config_name=!config_name: =!"
+            echo !index!:!config_name!>> "%AUTORUN_CONFIGS%"
+            set /a index+=1
+        )
+    )
+    endlocal
+    
+    :: Создаем задачу в планировщике
+    echo.
+    echo Создаю задачу автозапуска...
+    schtasks /create /tn "SmartZapretLauncher_Autorun" /tr "'%~f0' --autorun" /sc onlogon /rl highest /f >nul
+    
+    if not errorlevel 1 (
+        echo %COL_GRN%Автозапуск успешно настроен!%COL_RST%
+    ) else (
+        echo %COL_RED%Ошибка создания задачи!%COL_RST%
+    )
+    timeout /t 2 >nul
+    goto menu_autorun_settings
+) else (
+    echo Конфиги не выбраны!
+    timeout /t 2 >nul
+    goto setup_autorun_configs
+)
+
+:: РЕЖИМ АВТОЗАПУСКА
+:run_autorun_sequence
+:: Задержка для загрузки сет.драйверов
+timeout /t 2 /nobreak >nul
+:: Проверяем обновления
+call :check_updates_startup
+:: Проверяем конфликты
+call :check_conflicts
+
+if not exist "%AUTORUN_CONFIGS%" exit
+
+set "saved_configs="
+set "config_count=0"
+
+setlocal enabledelayedexpansion
+for /f "tokens=2 delims=:" %%a in ('type "%AUTORUN_CONFIGS%" 2^>nul') do (
+    set "config_name=%%a"
+    set "config_name=!config_name: =!"
+    for /d %%d in ("configs\*") do (
+        if exist "configs\%%~nxd\!config_name!.conf" (
+            if defined saved_configs (
+                set "saved_configs=!saved_configs! configs\%%~nxd\!config_name!.conf"
+            ) else (
+                set "saved_configs=configs\%%~nxd\!config_name!.conf"
+            )
+            set /a config_count+=1
+        )
+    )
+)
+endlocal & set "saved_configs=%saved_configs%"
+
+if defined saved_configs (
+    :: Запускаем конфиги с учетом текущих настроек IPSET
+    call :run_selected_configs "%saved_configs%"
+    :: Чтобы окно не закрылось
+    goto configs_launched
+) else (
+    exit
+)
 
 :launch_all_configs
 cls
@@ -541,7 +730,10 @@ for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
         set "basename=!fullpath!"
         for %%f in ("!fullpath!") do set "basename=%%~nxf"
         set "basename=!basename:~0,-5!"
-        echo !index! - !basename!
+
+        set "display_index=  !index!"
+        set "display_index=!display_index:~-2!"
+        echo  !display_index! - !basename!
         echo !index!:!basename!>> "%TEMP_DIR%\current_configs_all.txt"
         set /a index+=1
     )
@@ -1161,7 +1353,7 @@ for %%c in (%configs_to_run%) do (
                 start "Zapret_!config_name!" /B cmd /c ""bin\winws.exe" @"!final_path!" & del /q "!final_path!" >nul 2>&1"
             )
         ) else (
-            :: ОБЫЧНЫЙ КОНФИГ (Discord и др
+            :: ОБЫЧНЫЙ КОНФИГ (Discord и др)
             echo Запускаю: !config_name!
             
             if "!SHOW_LOGS!"=="1" (
@@ -1335,7 +1527,7 @@ exit
 :check_updates_startup
 chcp 437 >nul
 
-::  Проверка PS
+:: Проверка PS
 set "HAS_NET_TOOL=0"
 where curl >nul 2>&1 && set "HAS_NET_TOOL=1"
 if "%HAS_NET_TOOL%"=="0" (
@@ -1343,7 +1535,7 @@ if "%HAS_NET_TOOL%"=="0" (
 )
 if "%HAS_NET_TOOL%"=="0" goto :end_update_check
 
-:: Проверка таймера (4 часа)
+:: Проверка таймера (1 час)
 set "UPDATE_MARKER=%TEMP_DIR%\update_marker"
 if exist "%UPDATE_MARKER%" (
     if "%HAS_NET_TOOL%"=="2" goto :check_timer_ps
@@ -1352,13 +1544,13 @@ if exist "%UPDATE_MARKER%" (
 goto :do_update_check
 
 :check_timer_ps
-powershell -Command "$limit = (Get-Date).AddHours(-4); $last = (Get-Item '%UPDATE_MARKER%').LastWriteTime; if ($last -gt $limit) { exit 1 }" 2>nul
+powershell -Command "$limit = (Get-Date).AddHours(-1); $last = (Get-Item '%UPDATE_MARKER%').LastWriteTime; if ($last -gt $limit) { exit 1 }" 2>nul
 if errorlevel 1 goto :end_update_check
 goto :do_update_check
 
 :check_timer_curl
 powershell -Command "exit 0" >nul 2>&1 && (
-     powershell -Command "$limit = (Get-Date).AddHours(-4); $last = (Get-Item '%UPDATE_MARKER%').LastWriteTime; if ($last -gt $limit) { exit 1 }" 2>nul
+     powershell -Command "$limit = (Get-Date).AddHours(-1); $last = (Get-Item '%UPDATE_MARKER%').LastWriteTime; if ($last -gt $limit) { exit 1 }" 2>nul
      if errorlevel 1 goto :end_update_check
 )
 goto :do_update_check
@@ -1370,15 +1562,17 @@ set "SERVER_VERSION="
 set "TEMP_VER=%TEMP_DIR%\server_version.txt"
 if exist "%TEMP_VER%" del "%TEMP_VER%" >nul 2>&1
 
-:: Скачивание версии (update.txt)
+:: Скачивание версии (update.txt) с тайм-аутом 10 сек
 if "%HAS_NET_TOOL%"=="2" goto :download_ps
 
 :download_curl
-curl -s -L --connect-timeout 3 --max-time 3 "%VERSION_URL%" -o "%TEMP_VER%" >nul 2>&1
+:: (10 сек)
+curl -s -L --connect-timeout 10 --max-time 10 "%VERSION_URL%" -o "%TEMP_VER%" >nul 2>&1
 goto :process_version
 
 :download_ps
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { (New-Object System.Net.WebClient).DownloadFile('%VERSION_URL%', '%TEMP_VER%') } catch {}" >nul 2>&1
+:: (10 сек)
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { $r = [System.Net.WebRequest]::Create('%VERSION_URL%'); $r.Timeout = 10000; $s = $r.GetResponse().GetResponseStream(); $sr = New-Object System.IO.StreamReader($s); $t = $sr.ReadToEnd(); $sr.Close(); [System.IO.File]::WriteAllText('%TEMP_VER%', $t) } catch {}" >nul 2>&1
 goto :process_version
 
 :process_version
@@ -1402,13 +1596,13 @@ chcp 65001 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              ДОСТУПНО ОБНОВЛЕНИЕ!                            ║
+echo  ║                  ДОСТУПНО ОБНОВЛЕНИЕ!                        ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo   Текущая версия: %LOCAL_VERSION%
 echo   Новая версия:   %SERVER_VERSION%
 echo.
-set /p "upd_choice= Перейти на страницу Smart Zapret Launcher? [Y/N]: "
+set /p "upd_choice= Перейти на страницу GitHub? [Y/N]: "
 if /i "%upd_choice%"=="Y" (
     start "" "%REPO_URL%"
 )
@@ -1451,8 +1645,6 @@ if "!conflict_found!"=="1" (
     echo.
     echo   Рекомендуется закрыть эти программы, так как их одновременная
     echo   работа с лаунчером может привести к ошибкам обхода.
-    echo.
-    echo   %COL_GRY%Примечание: Cloudflare WARP игнорируется и не считается конфликтом.%COL_RST%
     echo.
     echo   %COL_GRN%Нажмите любую клавишу, чтобы продолжить...%COL_RST%
     pause >nul
