@@ -11,15 +11,10 @@ ubisoftconnect.com
 uplay.com
 
 # EA App / Origin
-origin.com
-accounts.ea.com
-signin.ea.com
 activity.ea.com
 easo.ea.com
 easss.ea.com
 easu.ea.com
-eas-download.content.ea.com
-content.ea.com
 config.ea.com
 dataportal.ea.com
 game-data.ea.com
@@ -27,16 +22,6 @@ api.origin.com
 api1.origin.com
 api2.origin.com
 api3.origin.com
-accounts.cdn.origin.com
-avatar.cdn.origin.com
-download.dm.origin.com
-telemetry.ea.com
-probe.ea.com
-telemetry.gos.ea.com
-atlas.telemetry.gos.ea.com
-telemetry.origin.com
-ord38.telemetry.origin.com
-ssl-lvlt.cdn.ea.com
 gos.ea.com
 atlas.gos.ea.com
 gosredirector.ea.com
@@ -202,6 +187,12 @@ lolusercontent.com
 pvp.net
 pvp.tv
 ulol.com
+blitz-cdn.blitz.gg
+lol.v2.iesdev.com
+datalake.v2.iesdev.com
+blitz-desktop.blitz.gg
+blitz.gg
+dekstop.blitz-cdn.blitz.gg
 
 # Dead By Daylight
 deadbydaylight.com
@@ -209,6 +200,11 @@ dbd.starbreeze.com
 starbreeze.com
 bhvr.com
 behaviourinteractive.com
+
+# Beat Saber
+beatsaver.com
+beatmods.com
+modelsaber.com
 
 # Общие игровые CDN
 akamai.net

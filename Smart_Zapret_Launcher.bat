@@ -3,13 +3,13 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.31"
+set "LOCAL_VERSION=1.32"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
 set "REPO_URL=https://github.com/%GITHUB_USER%/%GITHUB_REPO%"
 
-:: ЧИСТКА ПРИ СТАРТЕ (При закрытии крестиком)
+:: ЧИСТКА ПРИ СТАРТЕ (При аварийном закрытии)
 taskkill /f /im winws.exe >nul 2>&1
 taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
 if exist "%~dp0temporary\dynamic_configs" (
@@ -772,7 +772,7 @@ timeout /t 3 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                    ZAPRET ЗАПУЩЕН                            ║
+echo  ║                       ZAPRET ЗАПУЩЕН                         ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Запущено конфигов: %config_count%
@@ -789,7 +789,7 @@ if "%SHOW_LOGS%"=="1" (
     echo   %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
-echo  1 - Перезапустить конфиги
+echo  1 - Выбрать другие конфиги
 echo  2 - Остановить Zapret и вернуться в меню
 echo  3 - Остановить Zapret и выйти
 echo.
@@ -810,7 +810,7 @@ goto configs_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ВЫБОР КАТЕГОРИЙ                            ║
+echo  ║                      ВЫБОР КАТЕГОРИЙ                         ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Выберите категории для запуска:
@@ -838,7 +838,7 @@ endlocal & set "category_count=%category_count%"
 if %category_count%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                         ОШИБКА                               ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  В папке configs нет подходящих подкаталогов!
@@ -876,7 +876,7 @@ endlocal & set "selected_configs=%selected_configs%" & set "config_count=%config
 if %config_count% gtr 5 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                         ОШИБКА                               ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  Нельзя выбрать больше 5 конфигов!
@@ -1616,12 +1616,14 @@ goto :eof
 setlocal enabledelayedexpansion
 set "conflict_found=0"
 set "conflict_names="
+set "kill_list="
 
 :: Проверка GoodbyeDPI
 tasklist /FI "IMAGENAME eq goodbyedpi.exe" 2>nul | find /i "goodbyedpi.exe" >nul
 if not errorlevel 1 (
     set "conflict_found=1"
     set "conflict_names=!conflict_names! [GoodbyeDPI]"
+    set "kill_list=!kill_list! goodbyedpi.exe"
 )
 
 :: Проверка VPN
@@ -1630,6 +1632,7 @@ for %%p in (openvpn.exe wireguard.exe ProtonVPN.exe tun2socks.exe) do (
     if not errorlevel 1 (
         set "conflict_found=1"
         set "conflict_names=!conflict_names! [%%~np]"
+        set "kill_list=!kill_list! %%p"
     )
 )
 
@@ -1646,8 +1649,17 @@ if "!conflict_found!"=="1" (
     echo   Рекомендуется закрыть эти программы, так как их одновременная
     echo   работа с лаунчером может привести к ошибкам обхода.
     echo.
-    echo   %COL_GRN%Нажмите любую клавишу, чтобы продолжить...%COL_RST%
-    pause >nul
+    
+    set /p "kill_choice= Завершить эти процессы? [Y/N]: "
+    if /i "!kill_choice!"=="Y" (
+        echo.
+        for %%k in (!kill_list!) do (
+            echo   Завершаю %%k...
+            taskkill /F /IM "%%k" >nul 2>&1
+        )
+        echo   %COL_GRN%Конфликтующие процессы завершены.%COL_RST%
+        timeout /t 2 >nul
+    )
 )
 endlocal
 goto :eof
