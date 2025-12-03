@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.32"
+set "LOCAL_VERSION=1.33"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -1605,6 +1605,7 @@ echo.
 set /p "upd_choice= Перейти на страницу GitHub? [Y/N]: "
 if /i "%upd_choice%"=="Y" (
     start "" "%REPO_URL%"
+    exit
 )
 goto :eof
 
