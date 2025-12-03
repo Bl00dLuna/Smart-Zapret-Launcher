@@ -49,6 +49,16 @@ xboxplayanywhere.com
 xboxservices.com
 xboxstudios.com
 
+# Roblox
+roblox.com
+www.roblox.com
+rbxcdn.com
+robloxlabs.com
+arkoselabs.com
+ecsv2.roblox.com
+metrics.roblox.com
+apis.roblox.com
+
 # Battle.net
 battle.net
 blizzard.com
