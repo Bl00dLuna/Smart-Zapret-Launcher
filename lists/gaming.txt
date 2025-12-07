@@ -58,6 +58,7 @@ arkoselabs.com
 ecsv2.roblox.com
 metrics.roblox.com
 apis.roblox.com
+funcaptcha.com
 
 # Battle.net
 battle.net
