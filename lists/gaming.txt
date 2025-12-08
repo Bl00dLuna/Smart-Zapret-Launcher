@@ -1,16 +1,22 @@
-# Epic game store
+# Epic game store              #Если не работает epic game store  , то уберите решётку на каждой строке, кроме этой
 unrealengine.com
-unrealtournament.com
+fn.gg
+#epicgames.com
+#epicgames.net
+#account.epicgames.com
+#store.epicgames.com
 
-# Fortnite
-fortnite.com
-fortnite-vod.akamaized.net
+# Ubisoft Connect              #Если не работает ubisoft connect, то уберите решётку на каждой строке, кроме этой
+#ubisoftconnect.com            
+#uplay.com
+#ubiservices.com
 
-# Ubisoft Connect
-ubisoftconnect.com
-uplay.com
+# Riot client                  #Если не работает riot client, то уберите решётку на каждой строке, кроме этой
+#riotgames.com
+#riotcdn.net
+#rstatic.net
 
-# EA App / Origin
+# EA App
 activity.ea.com
 easo.ea.com
 easss.ea.com
@@ -29,25 +35,37 @@ blaze.ea.com
 rtm.tnt-ea.com
 
 # Xbox
+xbox.com
+xboxlive.com
+xboxservices.com
 gamepass.com
-start.ui.xboxlive.com
-profile.xboxlive.com
-login.microsoftonline.com
+xboxgamepass.com
 login.live.com
+login.microsoftonline.com
 auth.xboxlive.com
 xsts.auth.xboxlive.com
-xbx.lv
-xbox.co
-xbox.com
-xbox.eu
-xbox.org
-xboxab.com
-xboxgamepass.com
-xboxgamestudios.com
-xboxlive.com
-xboxplayanywhere.com
-xboxservices.com
-xboxstudios.com
+user.auth.xboxlive.com
+title.mgl.xboxlive.com
+xkms.xboxlive.com
+
+# Battle.net
+battle.net
+blizzard.com
+actual.battle.net
+us.actual.battle.net
+eu.actual.battle.net
+account.battle.net
+shop.battle.net
+
+# Rockstar Games
+rockstargames.com
+socialclub.rockstargames.com
+rsg.sc
+
+# Fortnite
+fortnite.com
+fortnite-vod.akamaized.net
+fortnite.net
 
 # Roblox
 roblox.com
@@ -58,158 +76,53 @@ arkoselabs.com
 ecsv2.roblox.com
 metrics.roblox.com
 apis.roblox.com
+funcaptcha.com
 
-# Battle.net
-battle.net
-blizzard.com
-actual.battle.net
-us.actual.battle.net
-eu.actual.battle.net
-blzddist1-a.akamaihd.net
-blzddist2-a.akamaihd.net
-blzddist3-a.akamaihd.net
-blzmedia-a.akamaihd.net
-level3.blizzard.com
-blizzard.gcdn.cloudn.co.kr
-
-# Rockstar Games
-rockstargames.com
-socialclub.rockstargames.com
-rsg.sc
-
-# Minecraft
-minecraft.net
-mojang.com
-launcher.mojang.com
-launchermeta.mojang.com
-resources.download.minecraft.net
-libraries.minecraft.net
-authserver.mojang.com
-sessionserver.mojang.com
-api.mojang.com
-api.minecraftservices.com
-textures.minecraft.net
-callersbane.com
-minecraft-services.net
-minecraftservices.com
-minecraftshop.com
-hypixel.net
-eu.hypixel.net
-mc.hypixel.net
-cdn.modrinth.com
-modrinth.com
-modrinth.gg
-essential.gg
-sparkuniverse.com
-
-# Apex Legends
+# Apex Legends & Titanfall 2
 apexlegends.com
-apexlegends-a.akamaihd.net
-apexstatic.cdn.origin.com
-apex.dm.origin.com
-apex.prod.dm.origin.com
-telemetry.prod.dm.origin.com
 respawn.com
 stryder.respawn.com
 apex.r2-pc.stryder.respawn.com
 apex.r3-pc.stryder.respawn.com
 apex.r5-pc.stryder.respawn.com
-r5---sn-5hnekn7z.c.2mdn.net
-r5---sn-5hnekn7s.c.2mdn.net
-r5---sn-5hnekn7y.c.2mdn.net
-r5---sn-5hnekn7k.c.2mdn.net
 projectapex.com
-
-# Titanfall 2
+matchmaking.respawn.com
 titanfall.com
-r2---sn-5hne6n7s.c.2mdn.net
-r3---sn-5hne6n7s.c.2mdn.net
-r4---sn-5hne6n7s.c.2mdn.net
 
 # Battlefield
 battlefield.com
 battlelog.com
-frostbite.com
 easports.com
 platoons.ea.com
 companion.ea.com
 stats.ea.com
-bf1.cdn.origin.com
-battlelog.bf1.cdn.origin.com
-battlelog-cdn.origin.com
-battlefield1943.com
 battlefield3.com
 battlefield4.com
 battlefield5.com
-battlefieldheroes.com
-battlefieldv.com
-
-# Riot
-historyofdota.com
-historyofdota.net
-historyofdota.org
-instituteofwar.org
-molesports.com
-rgpub.io
-riot-games.com
-riot.com
-riot.net
-riotcdn.net
-riotgames.co.kr
-riotgames.com
-riotgames.info
-riotgames.jp
-riotgames.net
-riotgames.tv
-riotpin.com
-riotpoints.com
-rstatic.net
-supremacy.com
-supremacy.net
-riotforgegames.com
-ruinedking.com
-convrgencegame.com
+battlefield2042.com
+frostbite.com
 
 # League of Lengends
-championshipseriesleague.com
-lcsmerch.com
-leaguehighschool.com
-leagueoflegends.ca
-leagueoflegends.co.kr
 leagueoflegends.com
-leagueoflegends.info
-leagueoflegends.kr
-leagueoflegends.net
-leagueoflegends.org
-leagueoflegendsscripts.com
-leaguesharp.info
-leaguoflegends.com
-learnwithleague.com
-lol-europe.com
-lolclub.org
-lolespor.com
-lolesports.com
-lolfanart.net
-lolpcs.com
-lolshop.co.kr
-lolstatic.com
-lolusercontent.com
+playruneterra.com
 pvp.net
-pvp.tv
-ulol.com
+lolstatic.com
+lolesports.com
+blitz.gg
 blitz-cdn.blitz.gg
+blitz-desktop.blitz.gg
 lol.v2.iesdev.com
 datalake.v2.iesdev.com
-blitz-desktop.blitz.gg
-blitz.gg
-dekstop.blitz-cdn.blitz.gg
 
 # Dead By Daylight
 deadbydaylight.com
-dbd.starbreeze.com
-starbreeze.com
 bhvr.com
+behaviour.com
 behaviourinteractive.com
+bhvrdbd.com
+live.bhvrdbd.com
+steam.live.bhvrdbd.com
+epic.live.bhvrdbd.com
 
 # Beat Saber
 beatsaver.com
@@ -219,125 +132,27 @@ modelsaber.com
 # Общие игровые CDN
 akamai.net
 akamaized.net
-amazonaws.com
+akamaihd.net
+cloudflare-ech.com
+cloudfront.com
 cloudfront.net
 edgekey.net
 eaassets-a.akamaihd.net
 eamaster.akamai.com
-cloudflare-ech.com
 
-# Amazon
-alexa.com
-a2z.com
-aboutamazon.co.uk
-aboutamazon.com
-aboutamazon.com.au
-aboutamazon.de
-aboutamazon.es
-aboutamazon.eu
-aboutamazon.fr
-aboutamazon.in
-aboutamazon.it
-aboutamazon.jp
-aboutamazon.pl
-amaaozn.com
-amazon-fashions.com
-amazon-jp-recruiting.com
-amazon-lantern.com
-amazon-launchpad.com
-amazon.ae
-amazon.ca
-amazon.co.jp
-amazon.co.uk
+# Amazon & AWS
 amazon.com
-amazon.com.au
-amazon.com.br
-amazon.com.mx
-amazon.com.tr
-amazon.de
-amazon.dev
-amazon.es
-amazon.fr
-amazon.in
-amazon.it
-amazon.jobs
-amazon.jp
-amazon.nl
-amazon.red
-amazon.sg
-amazonalexavoxcon.com
-amazonauthorinsights.com
-amazonbusiness.org
-amazonbusinessblog.com
-amazondevicesupport.com
-amazonfctours.com
-amazonianblog.com
-amazonimages.com
-amazonlaunchpad.com
-amazonliterarypartnership.com
-amazonlumberyard.wang
 amazonpay.com
-amazonpay.in
-amazonsdi.com
-amazonstudiosguilds.com
-amazonvideodirect.com
-amzn.asia
-amzn.com
-amzn.to
-amznl.com
-associates-amazon.com
-gameon-masters.com
-gdansk-amazon.com
-images-amazon.com
-media-amazon.com
-primeday.info
-siege-amazon.com
-ssl-images-amazon.com
-ueberamazon.de
-yamaxun.com
-sso.amazonaws.com
-
-# AWS
-acmvalidations.com
-acmvalidationsaws.com
-aesworkshops.com
-amazonaws-china.com
-amazonaws.biz
-amazonaws.co.uk
-amazonaws.info
+amazonaws.com
 amazonaws.net
 amazonaws.org
-amazonaws.tv
-amazoncognito.com
-amazonses.com
-amazonworkdocs.com
-amplifyapp.com
-amplifyframework.com
-aws-iot-hackathon.com
 aws.com
-awsapprunner.com
 awsapps.com
-awsautopilot.com
-awsautoscaling.com
-awsbraket.com
-awscommandlineinterface.com
-awsedstart.com
-awseducate.com
-awseducate.net
-awseducate.org
-awsglobalaccelerator.com
-awsloft-johannesburg.com
-awsloft-stockholm.com
-awssecworkshops.com
-awsstatic.com
-awsthinkbox.com
-awstrack.me
-cdkworkshop.com
-cloudfront.com
-containersonaws.com
-elasticbeanstalk.com
-thinkboxsoftware.com
-amzndns.co.uk
-amzndns.com
-amzndns.net
-amzndns.org
+s3.amazonaws.com
+sso.amazonaws.com
+signin.aws.amazon.com
+api.amazon.com
+media-amazon.com
+ssl-images-amazon.com
+images-amazon.com
+cloudfront.net

@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.33"
+set "LOCAL_VERSION=1.34"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -1294,11 +1294,11 @@ timeout /t 2 >nul
 goto bat_loop
 
 :run_selected_configs
-set "configs_to_run=%~1"
+set "raw_list=%~1"
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ЗАПУСК КОНФИГОВ                            ║
+echo  ║                    ЗАПУСК КОНФИГОВ                           ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Останавливаю Zapret...
@@ -1309,20 +1309,37 @@ set "active_configs="
 set "run_count=0"
 setlocal enabledelayedexpansion
 
-:: Создаем папку для динамических конфигов
+:: Сорт по приоритету
+set "sorted_list="
+for %%c in (!raw_list!) do (
+    echo "%%c" | findstr /i "\\discord\\" >nul && set "sorted_list=!sorted_list! %%c"
+)
+for %%c in (!raw_list!) do (
+    echo "%%c" | findstr /i "\\youtube_twitch\\" >nul && set "sorted_list=!sorted_list! %%c"
+)
+for %%c in (!raw_list!) do (
+    echo "%%c" | findstr /i "\\gaming\\" >nul && set "sorted_list=!sorted_list! %%c"
+)
+for %%c in (!raw_list!) do (
+    echo "%%c" | findstr /i /v "\\discord\\ \\youtube_twitch\\ \\gaming\\ \\universal\\" >nul && set "sorted_list=!sorted_list! %%c"
+)
+for %%c in (!raw_list!) do (
+    echo "%%c" | findstr /i "\\universal\\" >nul && set "sorted_list=!sorted_list! %%c"
+)
+:: Папка для динамических конфигов
 if not exist "%TEMP_DIR%\dynamic_configs" mkdir "%TEMP_DIR%\dynamic_configs" >nul 2>&1
-
-for %%c in (%configs_to_run%) do (
+:: Уже отсорт список
+for %%c in (!sorted_list!) do (
     for %%f in ("%%c") do (
         set "config_name=%%~nf"
         set "source_path=%%c"
         
-        :: будем запускать ОРИГИНАЛЬНЫЙ файл
+        :: запуск ориг файла
         set "final_path=%%c"
         set "need_processing=0"
         set "target_ipset="
         
-        :: Проверки папок (Universal/Gaming)
+        :: Проверки папок
         echo "%%c" | findstr /i "\\universal\\" >nul
         if !errorlevel! equ 0 (
             set "need_processing=1"
@@ -1340,7 +1357,7 @@ for %%c in (%configs_to_run%) do (
         )
         
         if "!need_processing!"=="1" (
-            :: ДИНАМИЧЕСКИЙ КОНФИГ
+            :: Динамик конф
             set "dynamic_path=%TEMP_DIR%\dynamic_configs\!config_name!.conf"
             call :create_dynamic_file "!source_path!" "!dynamic_path!" "!target_ipset!"
             set "final_path=!dynamic_path!"
@@ -1353,7 +1370,7 @@ for %%c in (%configs_to_run%) do (
                 start "Zapret_!config_name!" /B cmd /c ""bin\winws.exe" @"!final_path!" & del /q "!final_path!" >nul 2>&1"
             )
         ) else (
-            :: ОБЫЧНЫЙ КОНФИГ (Discord и др)
+            :: Обычный конф
             echo Запускаю: !config_name!
             
             if "!SHOW_LOGS!"=="1" (
