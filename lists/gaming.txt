@@ -116,33 +116,47 @@ datalake.v2.iesdev.com
 
 # Dead By Daylight
 deadbydaylight.com
+dbd.starbreeze.com
+starbreeze.com
 bhvr.com
-behaviour.com
 behaviourinteractive.com
-bhvrdbd.com
-live.bhvrdbd.com
-steam.live.bhvrdbd.com
-epic.live.bhvrdbd.com
 
 # Beat Saber
 beatsaver.com
 beatmods.com
 modelsaber.com
 
-# Общие игровые CDN
-akamai.net
-akamaized.net
-akamaihd.net
+# VRchat
+api.vrchat.cloud
+assets.vrchat.com
+cloud.exitgames.com
+d348imysud55la.cloudfront.net
+eu.ns.exitgames.com
+files.vrchat.cloud
+jp.ns.exitgames.com
+ns.exitgames.com
+ns.photonengine.io
+photonengine.io
+pipeline.vrchat.cloud
+status.vrchat.com
+use.ns.exitgames.com
+usw.ns.exitgames.com
+vrchat.cloud
+vrchat.com
+vrchat.net
+
+# Cloudflare
+cloudflare.com
 cloudflare-ech.com
-cloudfront.com
-cloudfront.net
-edgekey.net
-eaassets-a.akamaihd.net
-eamaster.akamai.com
+cloudflare.net
+challenges.cloudflare.com
+cdnjs.com
+cdnjs.cloudflare.com
+consent.cloudflare.com
+workers.dev
 
 # Amazon & AWS
 amazon.com
-amazonpay.com
 amazonaws.com
 amazonaws.net
 amazonaws.org
@@ -155,4 +169,5 @@ api.amazon.com
 media-amazon.com
 ssl-images-amazon.com
 images-amazon.com
+cloudfront.com
 cloudfront.net

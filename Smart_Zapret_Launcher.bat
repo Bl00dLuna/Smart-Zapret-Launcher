@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.34"
+set "LOCAL_VERSION=1.41"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -71,6 +71,11 @@ set "COL_MAG="
 set "COL_CYA="
 set "COL_GRY="
 set "COL_WHT="
+set "COL_ORG="
+set "COL_PNK="
+set "COL_LIM="
+set "COL_GLD="
+set "COL_VIO="
 set "COL_RST="
 
 :: Определение Win
@@ -79,6 +84,8 @@ for /f "tokens=4-5 delims=. " %%i in ('ver') do set VERSION=%%i.%%j
 :: Если Win 10 или 11
 if "%VERSION%" == "10.0" (
     for /F %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
+    
+    :: Стандартные цвета(яркие)
     call set "COL_GRY=%%ESC%%[90m"
     call set "COL_RED=%%ESC%%[91m"
     call set "COL_GRN=%%ESC%%[92m"
@@ -87,6 +94,14 @@ if "%VERSION%" == "10.0" (
     call set "COL_MAG=%%ESC%%[95m"
     call set "COL_CYA=%%ESC%%[96m"
     call set "COL_WHT=%%ESC%%[97m"
+    
+    :: Ргб
+    call set "COL_ORG=%%ESC%%[38;5;208m"
+    call set "COL_PNK=%%ESC%%[38;5;198m"
+    call set "COL_LIM=%%ESC%%[38;5;118m"
+    call set "COL_GLD=%%ESC%%[38;5;220m"
+    call set "COL_VIO=%%ESC%%[38;5;129m"
+    :: Сброс цвета
     call set "COL_RST=%%ESC%%[0m"
 )
 
@@ -124,7 +139,7 @@ if not defined USE_IPSET_GAMING (
 :: АВТОЗАПУСК
 if "%1"=="--autorun" goto run_autorun_sequence
 
-:: Проверка апдейт 2 часа
+:: Проверка апдейт 1 час
 call :check_updates_startup
 
 :: Проверка конфликтов (VPN, GoodbyeDPI)
@@ -161,7 +176,7 @@ set "ar_warning="
 schtasks /query /tn "SmartZapretLauncher_Autorun" >nul 2>&1
 if not errorlevel 1 (
     if not exist "%AUTORUN_CONFIGS%" (
-        set "ar_warning= %COL_YEL%(ТРЕБУЕТ ОБНОВЛЕНИЯ НАСТРОЕК!)"
+        set "ar_warning= %COL_RED%(ТРЕБУЕТ ОБНОВЛЕНИЯ НАСТРОЕК!)"
     )
 )
 
@@ -192,7 +207,7 @@ echo.
 echo  %COL_GRN%1 - Запустить Zapret (все конфиги) [Рекомендовано для постоянного использования] %COL_RST%
 echo  %COL_GRN%2 - Запустить Zapret (отдельные конфиги) [Рекомендовано для тестирования и запуска определённых конфигов] %COL_RST%
 echo.
-echo  %COL_RED%3 - Запустить Zapret (bat-файл) [Старый способ обхода] %COL_RST%
+echo  %COL_ORG%3 - Запустить Zapret (bat-файл) [Старый способ обхода] %COL_RST%
 echo.
 echo  0 - Выйти
 echo.
@@ -259,7 +274,7 @@ goto main_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                 НАСТРОЙКА АВТОЗАПУСКА                        ║
+echo  ║                  НАСТРОЙКА АВТОЗАПУСКА                       ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Здесь вы можете выбрать конфиги, которые будут запускаться
@@ -282,7 +297,7 @@ if "%task_exists%"=="0" (
     if "%config_exists%"=="1" (
         set "autorun_status=%COL_GRN%АКТИВЕН%COL_RST%"
     ) else (
-        set "autorun_status=%COL_YEL%ТРЕБУЕТ ОБНОВЛЕНИЯ (Файл настроек не найден)%COL_RST%"
+        set "autorun_status=%COL_RED%ТРЕБУЕТ ОБНОВЛЕНИЯ (Файл настроек не найден)%COL_RST%"
     )
 )
 
@@ -331,7 +346,7 @@ goto menu_autorun_settings
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║           ВЫБОР КОНФИГОВ ДЛЯ АВТОЗАПУСКА                     ║
+echo  ║               ВЫБОР КОНФИГОВ ДЛЯ АВТОЗАПУСКА                 ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Выберите категории:
@@ -400,7 +415,7 @@ if defined selected_configs (
     goto setup_autorun_configs
 )
 
-:: РЕЖИМ АВТОЗАПУСКА
+:: Автозапуск
 :run_autorun_sequence
 :: Задержка для загрузки сет.драйверов
 timeout /t 2 /nobreak >nul
@@ -413,11 +428,14 @@ if not exist "%AUTORUN_CONFIGS%" exit
 
 set "saved_configs="
 set "config_count=0"
+set "missing_error=0"
 
 setlocal enabledelayedexpansion
 for /f "tokens=2 delims=:" %%a in ('type "%AUTORUN_CONFIGS%" 2^>nul') do (
     set "config_name=%%a"
     set "config_name=!config_name: =!"
+    set "current_found=0"
+    
     for /d %%d in ("configs\*") do (
         if exist "configs\%%~nxd\!config_name!.conf" (
             if defined saved_configs (
@@ -426,9 +444,32 @@ for /f "tokens=2 delims=:" %%a in ('type "%AUTORUN_CONFIGS%" 2^>nul') do (
                 set "saved_configs=configs\%%~nxd\!config_name!.conf"
             )
             set /a config_count+=1
+            set "current_found=1"
         )
     )
+    
+    :: Если конфиг не найден
+    if "!current_found!"=="0" (
+        echo.
+        echo  ╔══════════════════════════════════════════════════════════════╗
+        echo  ║                          ОШИБКА                              ║
+        echo  ╚══════════════════════════════════════════════════════════════╝
+        echo.
+        echo  %COL_RED%Конфиг "!config_name!" не найден!%COL_RST%
+        set "missing_error=1"
+    )
 )
+
+if "!missing_error!"=="1" (
+    echo.
+    echo  Выберите конфиги для автозапуска заново
+    echo.
+    echo  %COL_GRN%Нажмите любую клавишу, чтобы продолжить...%COL_RST%
+    pause >nul
+    endlocal
+    goto menu_autorun_settings
+)
+
 endlocal & set "saved_configs=%saved_configs%"
 
 if defined saved_configs (
@@ -560,7 +601,7 @@ echo  ╔═══════════════════════�
 echo  ║          ВЫБОР ДОПОЛНИТЕЛЬНОЙ КАТЕГОРИИ                      ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
-echo  Стандартные категории (discord, gaming, universal, youtube_twitch)
+echo  Стандартные категории (discord, youtube_twitch, gaming, universal)
 echo  будут запущены автоматически.
 echo.
 echo  Доступные дополнительные категории:
@@ -572,9 +613,9 @@ set count=0
 for /f "delims=" %%d in ('dir "configs\*" /ad /b ^| findstr /v /i "lists bin configs_bat temporary" ^| sort') do (
     set "dir_name=%%d"
     if /i not "!dir_name!"=="discord" (
-        if /i not "!dir_name!"=="gaming" (
-            if /i not "!dir_name!"=="universal" (
-                if /i not "!dir_name!"=="youtube_twitch" (
+        if /i not "!dir_name!"=="youtube_twitch" (
+            if /i not "!dir_name!"=="gaming" (
+                if /i not "!dir_name!"=="universal" (
                     if !count! lss 5 (
                         set "display_index=  !index!"
                         set "display_index=!display_index:~-2!"
@@ -628,7 +669,7 @@ goto show_all_category_selection
 goto select_standard_configs
 
 :select_standard_configs
-set "actual_categories=discord gaming youtube_twitch"
+set "actual_categories=discord youtube_twitch gaming"
 
 if defined extra_category (
     set "actual_categories=%actual_categories% %extra_category%"
@@ -772,7 +813,7 @@ timeout /t 3 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                       ZAPRET ЗАПУЩЕН                         ║
+echo  ║                     ZAPRET ЗАПУЩЕН                           ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Запущено конфигов: %config_count%
@@ -810,7 +851,7 @@ goto configs_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                      ВЫБОР КАТЕГОРИЙ                         ║
+echo  ║                   ВЫБОР КАТЕГОРИЙ                            ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Выберите категории для запуска:
@@ -821,12 +862,35 @@ del "%TEMP_DIR%\categories.txt" >nul 2>&1
 setlocal enabledelayedexpansion
 set "category_count=0"
 
+:: Приоритеты
+if exist "configs\discord\" (
+    set /a category_count+=1
+    echo !category_count!:discord>> "%TEMP_DIR%\categories.txt"
+)
+
+if exist "configs\youtube_twitch\" (
+    set /a category_count+=1
+    echo !category_count!:youtube_twitch>> "%TEMP_DIR%\categories.txt"
+)
+
+if exist "configs\gaming\" (
+    set /a category_count+=1
+    echo !category_count!:gaming>> "%TEMP_DIR%\categories.txt"
+)
+
 for /d %%d in ("configs\*") do (
     set "dir_name=%%~nxd"
     if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="configs_bat" if /i not "!dir_name!"=="!TEMP_DIR!" (
-        set /a category_count+=1
-        echo !category_count!:!dir_name!>> "%TEMP_DIR%\categories.txt"
+        if /i not "!dir_name!"=="discord" if /i not "!dir_name!"=="youtube_twitch" if /i not "!dir_name!"=="gaming" if /i not "!dir_name!"=="universal" (
+            set /a category_count+=1
+            echo !category_count!:!dir_name!>> "%TEMP_DIR%\categories.txt"
+        )
     )
+)
+
+if exist "configs\universal\" (
+    set /a category_count+=1
+    echo !category_count!:universal>> "%TEMP_DIR%\categories.txt"
 )
 
 for /f "tokens=1,2 delims=:" %%a in ('type "%TEMP_DIR%\categories.txt"') do (
@@ -838,7 +902,7 @@ endlocal & set "category_count=%category_count%"
 if %category_count%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                         ОШИБКА                               ║
+    echo  ║                       ОШИБКА                                 ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  В папке configs нет подходящих подкаталогов!
@@ -1421,28 +1485,23 @@ for /f "usebackq delims=" %%a in ("%source_file%") do (
         if !skip_next! equ 0 (
             if "%%b"=="--ipset" (
                 if "!use_ipset!"=="0" (
-                    :: Ipset ВЫКЛЮЧЕН - пропускаем ipset
+                    :: Ipset выключен
                     set "skip_next=1"
                 ) else (
-                    :: Ipset ВКЛЮЧЕН - оставляем ipset
+                    :: Ipset включен
                     set "processed_line=!processed_line! %%b"
                 )
             ) else if "%%b"=="--hostlist" (
                 if "!use_ipset!"=="1" (
-                    :: Ipset ВКЛЮЧЕН - пропускаем hostlist
+                    :: Ipset включен без hostlist
                     set "skip_next=1"
                 ) else (
-                    :: Ipset ВЫКЛЮЧЕН - оставляем hostlist
+                    :: Ipset выключен с hostlist
                     set "processed_line=!processed_line! %%b"
                 )
             ) else if "%%b"=="--hostlist-exclude" (
-                if "!use_ipset!"=="1" (
-                    :: Ipset ВКЛЮЧЕН - пропускаем hostlist-exclude
-                    set "skip_next=1"
-                ) else (
-                    :: Ipset ВЫКЛЮЧЕН - оставляем hostlist-exclude
-                    set "processed_line=!processed_line! %%b"
-                )
+                :: Белый список активен всгда
+                set "processed_line=!processed_line! %%b"
             ) else (
                 set "processed_line=!processed_line! %%b"
             )
@@ -1613,7 +1672,7 @@ chcp 65001 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                  ДОСТУПНО ОБНОВЛЕНИЕ!                        ║
+echo  ║                   ДОСТУПНО ОБНОВЛЕНИЕ!                       ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo   Текущая версия: %LOCAL_VERSION%

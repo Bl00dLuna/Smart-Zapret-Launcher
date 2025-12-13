@@ -79,11 +79,11 @@ cloudflare-ech.com
 cloudflare-quic.com
 workers.dev
 pages.dev
+cloudflare.net
 one.one.one.one
 
 # Amazon & AWS
 amazon.com
-amazonpay.com
 amazonaws.com
 amazonaws.net
 amazonaws.org
@@ -97,14 +97,6 @@ media-amazon.com
 ssl-images-amazon.com
 images-amazon.com
 cloudfront.net
-
-# Akamai
-akamai.net
-akamaized.net
-akamaiedge.net
-edgesuite.net
-edgekey.net
-llnwd.net
 
 # Другое
 play.google.com
