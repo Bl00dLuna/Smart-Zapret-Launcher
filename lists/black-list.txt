@@ -96,6 +96,7 @@ api.amazon.com
 media-amazon.com
 ssl-images-amazon.com
 images-amazon.com
+cloudfront.com
 cloudfront.net
 
 # Другое

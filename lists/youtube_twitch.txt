@@ -35,26 +35,16 @@ frankerfacez.com
 jnn-pa.googleapis.com
 lh3.googleusercontent.com
 
-# twitch					# ЕСЛИ У ВАС ПЛОХО РАБОТАЕТ ТВИЧ, УБЕРИТЕ РЕШЁТКУ С КАЖДОЙ СТРОКИ, КРОМЕ ЭТОЙ
-#twitch.tv
-#ttvnw.net
-#jtvnw.net
-#ext-twitch.tv
-#twitchsvc.net
-#live-video.net
-#twitchcdn.net
-#player.twitch.tv
-#usher.ttvnw.net
-#api.twitch.tv
-#gql.twitch.tv
-#spade.twitch.tv
-#pubsub-edge.twitch.tv
-#hls.ttvnw.net
-#vod-secure.twitch.tv
-#static-cdn.jtvnw.net
-#static.twitchcdn.net
-#assets.twitch.tv
-#clips-media-assets2.twitch.tv
-#video-weaver.iad1.ttvnw.net
-#video-weaver.dfw1.ttvnw.net  
-#video-weaver.lax1.ttvnw.net
+# twitch			# ЕСЛИ У ВАС ПЛОХО РАБОТАЕТ ТВИЧ, УБЕРИТЕ РЕШЁТКУ С КАЖДОЙ СТРОКИ, КРОМЕ ЭТОЙ
+twitch.tv
+ttvnw.net
+jtvnw.net
+live-video.net
+twitchcdn.net
+twitchsvc.net
+ext-twitch.tv
+api.twitch.tv
+gql.twitch.tv
+usher.ttvnw.net
+passport.twitch.tv
+irc-ws.chat.twitch.tv

@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.41"
+set "LOCAL_VERSION=1.42"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -142,14 +142,14 @@ if "%1"=="--autorun" goto run_autorun_sequence
 :: Проверка апдейт 1 час
 call :check_updates_startup
 
-:: Проверка конфликтов (VPN, GoodbyeDPI)
+:: Проверка конфликтов
 call :check_conflicts
 
 :: Проверка Zapret и папок
 if not exist "bin\winws.exe" (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                          ОШИБКА                              ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  Zapret не найден в bin\winws.exe
@@ -198,23 +198,21 @@ if "%USE_IPSET_GAMING%"=="1" (
     echo  %COL_MAG%g - Использовать ipset gaming [ВЫКЛ]  %COL_RST% [Действует только на gaming конфиги]
 )
 echo.
-if "%SHOW_LOGS%"=="1" (
-    echo  %COL_YEL%l - Включить логи [ВКЛ] %COL_RST%
-) else (
-    echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
-)
-echo.
 echo  %COL_GRN%1 - Запустить Zapret (все конфиги) [Рекомендовано для постоянного использования] %COL_RST%
 echo  %COL_GRN%2 - Запустить Zapret (отдельные конфиги) [Рекомендовано для тестирования и запуска определённых конфигов] %COL_RST%
-echo.
 echo  %COL_ORG%3 - Запустить Zapret (bat-файл) [Старый способ обхода] %COL_RST%
 echo.
 echo  0 - Выйти
 echo.
 echo.
 echo  %COL_CYA%a - Настройки автозапуска%ar_warning% %COL_RST%
+if "%SHOW_LOGS%"=="1" (
+    echo  %COL_YEL%l - Включить логи [ВКЛ] %COL_RST%
+) else (
+    echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
+)
 echo.
-set /p choice="Выберите действие [0-3] или опцию [i,g,l,a]: "
+set /p choice="Выберите действие [0-3] или опцию [i,g,a,l]: "
 
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
@@ -521,8 +519,35 @@ if exist "%LAST_CONFIGS_ALL%" (
     )
 )
 
-call :select_all_configs
-goto :eof
+set "actual_categories=discord youtube_twitch gaming universal"
+set "selected_configs="
+set "config_count=0"
+
+for %%c in (%actual_categories%) do (
+    call :select_config_for_category_all "%%c"
+)
+
+if defined selected_configs (
+    del "%LAST_CONFIGS_ALL%" >nul 2>&1
+    setlocal enabledelayedexpansion
+    set index=1
+    for %%c in (!selected_configs!) do (
+        for %%f in ("%%c") do (
+            set "config_name=%%~nf"
+            set "config_name=!config_name: =!"
+            echo !index!:!config_name!>> "%LAST_CONFIGS_ALL%"
+            set /a index+=1
+        )
+    )
+    endlocal
+    
+    call :run_selected_configs "%selected_configs%"
+    goto configs_launched
+) else (
+    echo Не выбрано ни одного конфига!
+    pause
+    goto main_loop
+)
 
 :run_saved_configs_all
 set "saved_configs="
@@ -564,12 +589,6 @@ if "%config_count%"=="0" (
 call :run_selected_configs "%saved_configs%"
 goto configs_launched
 
-:select_all_configs
-set "selected_configs="
-set "config_count=0"
-set "extra_category="
-set "category_config="
-
 setlocal enabledelayedexpansion
 set "category_list="
 set "num_categories=0"
@@ -586,122 +605,10 @@ endlocal & set "category_list=%category_list%" & set "num_categories=%num_catego
 if %num_categories%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                        ОШИБКА                                ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  В папке configs нет подходящих подкаталогов!
-    pause
-    goto main_loop
-)
-
-:show_all_category_selection
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║          ВЫБОР ДОПОЛНИТЕЛЬНОЙ КАТЕГОРИИ                      ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo  Стандартные категории (discord, youtube_twitch, gaming, universal)
-echo  будут запущены автоматически.
-echo.
-echo  Доступные дополнительные категории:
-echo.
-
-setlocal enabledelayedexpansion
-set index=1
-set count=0
-for /f "delims=" %%d in ('dir "configs\*" /ad /b ^| findstr /v /i "lists bin configs_bat temporary" ^| sort') do (
-    set "dir_name=%%d"
-    if /i not "!dir_name!"=="discord" (
-        if /i not "!dir_name!"=="youtube_twitch" (
-            if /i not "!dir_name!"=="gaming" (
-                if /i not "!dir_name!"=="universal" (
-                    if !count! lss 5 (
-                        set "display_index=  !index!"
-                        set "display_index=!display_index:~-2!"
-                        echo  !display_index! - !dir_name!
-                        set "category_!index!=!dir_name!"
-                        set /a index+=1
-                        set /a count+=1
-                    )
-                )
-            )
-        )
-    )
-)
-set /a total_categories=index-1
-endlocal & set "total_categories=%total_categories%"
-
-if %total_categories%==0 (
-    echo   Нет дополнительных категорий
-    echo.
-    goto skip_extra_selection
-)
-
-echo.
-echo  S - Пропустить (только стандартные категории)
-echo  B - Вернуться в главное меню
-echo.
-set /p "cat_choice=Выберите дополнительную категорию [1-%total_categories%]: "
-
-if /i "%cat_choice%"=="B" goto main_loop
-if /i "%cat_choice%"=="S" (
-    set "extra_category="
-    goto select_standard_configs
-)
-
-set "extra_category="
-setlocal enabledelayedexpansion
-for /l %%i in (1, 1, %total_categories%) do (
-    if "!cat_choice!"=="%%i" (
-        endlocal
-        set "extra_category=!category_%%i!"
-        goto select_standard_configs
-    )
-)
-endlocal
-
-echo Неверный выбор!
-timeout /t 2 >nul
-goto show_all_category_selection
-
-:skip_extra_selection
-goto select_standard_configs
-
-:select_standard_configs
-set "actual_categories=discord youtube_twitch gaming"
-
-if defined extra_category (
-    set "actual_categories=%actual_categories% %extra_category%"
-)
-
-set "actual_categories=%actual_categories% universal"
-
-set "selected_configs="
-set "config_count=0"
-
-for %%c in (%actual_categories%) do (
-    call :select_config_for_category_all "%%c"
-)
-
-if defined selected_configs (
-    del "%LAST_CONFIGS_ALL%" >nul 2>&1
-    setlocal enabledelayedexpansion
-    set index=1
-    for %%c in (!selected_configs!) do (
-        for %%f in ("%%c") do (
-            set "config_name=%%~nf"
-            set "config_name=!config_name: =!"
-            echo !index!:!config_name!>> "%LAST_CONFIGS_ALL%"
-            set /a index+=1
-        )
-    )
-    endlocal
-    
-    call :run_selected_configs "%selected_configs%"
-    goto configs_launched
-) else (
-    echo Не выбрано ни одного конфига!
     pause
     goto main_loop
 )
@@ -766,7 +673,7 @@ for %%f in ("configs\%cat%\*.conf") do (
 sort "%TEMP_DIR%\temp_sorted.txt" /o "%TEMP_DIR%\temp_sorted.txt"
 set index=1
 for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
-    if !index! leq 15 (
+    if !index! leq 20 (
         set "fullpath=%%b"
         set "basename=!fullpath!"
         for %%f in ("!fullpath!") do set "basename=%%~nxf"
@@ -775,6 +682,7 @@ for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
         set "display_index=  !index!"
         set "display_index=!display_index:~-2!"
         echo  !display_index! - !basename!
+        
         echo !index!:!basename!>> "%TEMP_DIR%\current_configs_all.txt"
         set /a index+=1
     )
@@ -813,7 +721,7 @@ timeout /t 3 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                     ZAPRET ЗАПУЩЕН                           ║
+echo  ║                    ZAPRET ЗАПУЩЕН v%LOCAL_VERSION%                      ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Запущено конфигов: %config_count%
@@ -827,7 +735,7 @@ if "%USE_IPSET_GLOBAL%"=="1" (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo   %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
+    echo  %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
 echo  1 - Выбрать другие конфиги
@@ -867,27 +775,14 @@ if exist "configs\discord\" (
     set /a category_count+=1
     echo !category_count!:discord>> "%TEMP_DIR%\categories.txt"
 )
-
 if exist "configs\youtube_twitch\" (
     set /a category_count+=1
     echo !category_count!:youtube_twitch>> "%TEMP_DIR%\categories.txt"
 )
-
 if exist "configs\gaming\" (
     set /a category_count+=1
     echo !category_count!:gaming>> "%TEMP_DIR%\categories.txt"
 )
-
-for /d %%d in ("configs\*") do (
-    set "dir_name=%%~nxd"
-    if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="configs_bat" if /i not "!dir_name!"=="!TEMP_DIR!" (
-        if /i not "!dir_name!"=="discord" if /i not "!dir_name!"=="youtube_twitch" if /i not "!dir_name!"=="gaming" if /i not "!dir_name!"=="universal" (
-            set /a category_count+=1
-            echo !category_count!:!dir_name!>> "%TEMP_DIR%\categories.txt"
-        )
-    )
-)
-
 if exist "configs\universal\" (
     set /a category_count+=1
     echo !category_count!:universal>> "%TEMP_DIR%\categories.txt"
@@ -905,7 +800,7 @@ if %category_count%==0 (
     echo  ║                       ОШИБКА                                 ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
-    echo  В папке configs нет подходящих подкаталогов!
+    echo  В папке configs нет нужных подкаталогов!
     pause
     goto main_loop
 )
@@ -1078,12 +973,14 @@ for %%f in ("configs\%cat%\*.conf") do (
 sort "%TEMP_DIR%\temp_sorted.txt" /o "%TEMP_DIR%\temp_sorted.txt"
 set index=1
 for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted.txt"') do (
-    if !index! leq 15 (
+    if !index! leq 20 (
         set "fullpath=%%b"
         set "basename=!fullpath!"
         for %%f in ("!fullpath!") do set "basename=%%~nxf"
         set "basename=!basename:~0,-5!"
-        echo !index! - !basename!
+        set "display_index=  !index!"
+        set "display_index=!display_index:~-2!"
+        echo  !display_index! - !basename!
         echo !index!:!basename!>> "%TEMP_DIR%\current_configs.txt"
         set /a index+=1
     )
@@ -1125,7 +1022,7 @@ timeout /t 3 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                    ZAPRET ЗАПУЩЕН                            ║
+echo  ║                    ZAPRET ЗАПУЩЕН v%LOCAL_VERSION%                      ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Запущено конфигов: %config_count%
@@ -1139,7 +1036,7 @@ if "%USE_IPSET_GLOBAL%"=="1" (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo   %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
+    echo  %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
 echo  1 - Остановить Zapret и выбрать другие конфиги
@@ -1224,7 +1121,7 @@ endlocal & set "bat_count=%bat_count%"
 if %bat_count%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                        ОШИБКА                                ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo В папке configs_bat нет bat-файлов!
@@ -1237,7 +1134,7 @@ if %bat_count%==0 (
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              ВЫБОР BAT-ФАЙЛА ДЛЯ ЗАПУСКА                     ║
+echo  ║               ВЫБОР BAT-ФАЙЛА ДЛЯ ЗАПУСКА                    ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 
@@ -1290,7 +1187,7 @@ if "%valid_choice%"=="0" (
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ЗАПУСК BAT-ФАЙЛА                           ║
+echo  ║                     ЗАПУСК BAT-ФАЙЛА                         ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Останавливаю Zapret...
@@ -1323,7 +1220,7 @@ timeout /t 3 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                 BAT-ФАЙЛ ЗАПУЩЕН                             ║
+echo  ║                      BAT-ФАЙЛ ЗАПУЩЕН                        ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Запущен bat-файл: %bat_name%
@@ -1334,7 +1231,7 @@ if "%USE_IPSET_GLOBAL%"=="1" (
     echo  ipset выключен
 )
 if "%SHOW_LOGS%"=="1" (
-    echo   %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
+    echo  %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
 echo  1 - Остановить Zapret и выбрать другой bat-файл
@@ -1362,7 +1259,7 @@ set "raw_list=%~1"
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                    ЗАПУСК КОНФИГОВ                           ║
+echo  ║                     ЗАПУСК КОНФИГОВ                          ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Останавливаю Zapret...
@@ -1581,7 +1478,7 @@ goto :eof
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                       ВЫХОД                                  ║
+echo  ║                           ВЫХОД                              ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Останавливаю Zapret...

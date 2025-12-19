@@ -157,6 +157,7 @@ workers.dev
 
 # Amazon & AWS
 amazon.com
+amazongames.com
 amazonaws.com
 amazonaws.net
 amazonaws.org
