@@ -78,17 +78,6 @@ metrics.roblox.com
 apis.roblox.com
 funcaptcha.com
 
-# Apex Legends & Titanfall 2
-apexlegends.com
-respawn.com
-stryder.respawn.com
-apex.r2-pc.stryder.respawn.com
-apex.r3-pc.stryder.respawn.com
-apex.r5-pc.stryder.respawn.com
-projectapex.com
-matchmaking.respawn.com
-titanfall.com
-
 # Battlefield
 battlefield.com
 battlelog.com
@@ -154,6 +143,23 @@ cdnjs.com
 cdnjs.cloudflare.com
 consent.cloudflare.com
 workers.dev
+cloudflare-ech.com
+encryptedsni.com
+cloudflareaccess.com
+cloudflareapps.com
+cloudflarebolt.com
+cloudflareclient.com
+cloudflareinsights.com
+cloudflareok.com
+cloudflarepartners.com
+cloudflareportal.com
+cloudflarepreview.com
+cloudflareresolve.com
+cloudflaressl.com
+cloudflarestatus.com
+cloudflarestorage.com
+cloudflarestream.com
+cloudflaretest.com
 
 # Amazon & AWS
 amazon.com

@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.42"
+set "LOCAL_VERSION=1.43"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -104,7 +104,6 @@ if "%VERSION%" == "10.0" (
     :: Сброс цвета
     call set "COL_RST=%%ESC%%[0m"
 )
-
 :: Создаем папку для временных файлов если нет
 if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%" >nul 2>&1
 
@@ -211,8 +210,9 @@ if "%SHOW_LOGS%"=="1" (
 ) else (
     echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
 )
+echo  %COL_RED%n - Сброс сетевых настроек %COL_RST%
 echo.
-set /p choice="Выберите действие [0-3] или опцию [i,g,a,l]: "
+set /p choice="Выберите действие [0-3] или опцию [i,g,a,l,n]: "
 
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
@@ -222,6 +222,7 @@ if /i "%choice%"=="a" goto menu_autorun_settings
 if /i "%choice%"=="i" goto toggle_ipset_global
 if /i "%choice%"=="g" goto toggle_ipset_gaming
 if /i "%choice%"=="l" goto toggle_logs
+if /i "%choice%"=="n" goto reset_network
 echo Неверный выбор!
 timeout /t 2 >nul
 goto main_loop
@@ -272,7 +273,7 @@ goto main_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                  НАСТРОЙКА АВТОЗАПУСКА                       ║
+echo  ║                    НАСТРОЙКА АВТОЗАПУСКА                     ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Здесь вы можете выбрать конфиги, которые будут запускаться
@@ -344,7 +345,7 @@ goto menu_autorun_settings
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║               ВЫБОР КОНФИГОВ ДЛЯ АВТОЗАПУСКА                 ║
+echo  ║                ВЫБОР КОНФИГОВ ДЛЯ АВТОЗАПУСКА                ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Выберите категории:
@@ -483,7 +484,7 @@ if defined saved_configs (
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                ЗАПУСК ВСЕХ КОНФИГОВ                          ║
+echo  ║                    ЗАПУСК ВСЕХ КОНФИГОВ                      ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 
@@ -605,7 +606,7 @@ endlocal & set "category_list=%category_list%" & set "num_categories=%num_catego
 if %num_categories%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                        ОШИБКА                                ║
+    echo  ║                          ОШИБКА                              ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  В папке configs нет подходящих подкаталогов!
@@ -759,7 +760,7 @@ goto configs_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ВЫБОР КАТЕГОРИЙ                            ║
+echo  ║                      ВЫБОР КАТЕГОРИЙ                         ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Выберите категории для запуска:
@@ -797,7 +798,7 @@ endlocal & set "category_count=%category_count%"
 if %category_count%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                        ОШИБКА                                ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  В папке configs нет нужных подкаталогов!
@@ -835,7 +836,7 @@ endlocal & set "selected_configs=%selected_configs%" & set "config_count=%config
 if %config_count% gtr 5 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                         ОШИБКА                               ║
+    echo  ║                          ОШИБКА                              ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  Нельзя выбрать больше 5 конфигов!
@@ -1071,7 +1072,7 @@ echo Сканирую bat-файлы...
 if not exist "configs_bat\" (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                          ОШИБКА                              ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo Папка configs_bat не найдена!
@@ -1121,7 +1122,7 @@ endlocal & set "bat_count=%bat_count%"
 if %bat_count%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                        ОШИБКА                                ║
+    echo  ║                         ОШИБКА                               ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo В папке configs_bat нет bat-файлов!
@@ -1175,7 +1176,7 @@ if exist "%TEMP_DIR%\bat_paths.txt" (
 if "%valid_choice%"=="0" (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                       ОШИБКА                                 ║
+    echo  ║                        ОШИБКА                                ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo Неверный выбор!
@@ -1259,7 +1260,7 @@ set "raw_list=%~1"
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                     ЗАПУСК КОНФИГОВ                          ║
+echo  ║                      ЗАПУСК КОНФИГОВ                         ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Останавливаю Zapret...
@@ -1637,3 +1638,78 @@ if "!conflict_found!"=="1" (
 )
 endlocal
 goto :eof
+
+::Сброс сети
+:reset_network
+cls
+echo.
+echo  %COL_RED%╔══════════════════════════════════════════════════════════════╗%COL_RST%
+echo  %COL_RED%║                  СБРОС СЕТЕВЫХ НАСТРОЕК                      ║%COL_RST%
+echo  %COL_RED%╚══════════════════════════════════════════════════════════════╝%COL_RST%
+echo.
+echo   Эта функция удаляет "мусор" в сетевых настройках, оставшийся от
+echo   старых VPN, прокси-серверов, а также может исправить другие проблемы с сетью
+echo.
+echo   Может помочь, если:
+echo   - Приложения пишут "Нет сети" или "127.0.0.1:xxxx Connection refused".
+echo   - Браузер работает, а приложения не могут выйти в интернет.
+echo   - Вы удалили VPN/прокси, но интернет после этого перестал работать.
+echo.
+echo   Что будет сделано:
+echo   1. Очистка настроек Прокси (Реестр + WinHTTP).
+echo   2. Удаление переменных среды (HTTP_PROXY), перехватывающих трафик.
+echo   3. Сброс каталога Winsock и очистка кэша DNS.
+echo   Ваши настройки IP и DNS затронуты НЕ будут.
+echo.
+echo   %COL_RED%ВНИМАНИЕ: После выполнения компьютер нужно будет перезагрузить!%COL_RST%
+echo.
+echo   1 - Выполнить сброс сетевых настроек
+echo   0 - Отмена (Вернуться в меню)
+echo.
+
+set "net_choice="
+set /p "net_choice=Выберите действие [0-1]: "
+
+if "%net_choice%"=="0" goto main_loop
+if not "%net_choice%"=="1" goto reset_network
+
+cls
+echo.
+echo  %COL_CYA% ВЫПОЛНЕНИЕ СБРОСА СЕТИ %COL_RST%
+echo.
+
+echo %COL_CYA%[1/5] Отключение настроек Прокси в реестре...%COL_RST%
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer /f >nul 2>&1
+
+echo %COL_CYA%[2/5] Сброс системного WinHTTP...%COL_RST%
+netsh winhttp reset proxy >nul 2>&1
+
+echo %COL_CYA%[3/5] Очистка переменных среды (Environment Variables)...%COL_RST%
+:: для текущего пользователя
+reg delete "HKCU\Environment" /v HTTP_PROXY /f >nul 2>&1
+reg delete "HKCU\Environment" /v HTTPS_PROXY /f >nul 2>&1
+reg delete "HKCU\Environment" /v ALL_PROXY /f >nul 2>&1
+:: для всей системы
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v HTTP_PROXY /f >nul 2>&1
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v HTTPS_PROXY /f >nul 2>&1
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v ALL_PROXY /f >nul 2>&1
+
+echo %COL_CYA%[4/5] Сброс каталога Winsock...%COL_RST%
+netsh winsock reset >nul 2>&1
+
+echo %COL_CYA%[5/5] Очистка кэша DNS...%COL_RST%
+ipconfig /flushdns >nul 2>&1
+
+echo.
+echo %COL_GRN%ГОТОВО! Все сетевые настройки сброшены.%COL_RST%
+echo.
+echo Для вступления изменений в силу необходимо перезагрузить компьютер.
+echo.
+
+set /p "reboot_choice= Перезагрузить компьютер сейчас? [Y/N]: "
+if /i "%reboot_choice%"=="Y" (
+    shutdown /r /t 1
+) else (
+    goto main_loop
+)
