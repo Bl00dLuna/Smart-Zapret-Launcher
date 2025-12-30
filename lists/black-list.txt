@@ -26,6 +26,7 @@ twitter.com
 x.com
 t.co
 twimg.com
+api.x.com
 cms-twdigitalassets.com
 tweetdeck.com
 grok.com
