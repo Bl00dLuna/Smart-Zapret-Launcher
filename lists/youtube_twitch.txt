@@ -16,22 +16,23 @@ youtube.com
 youtubei.googleapis.com
 youtubekids.com
 ytimg.com
-i.ytimg.com
 ytimg.l.google.com
 
-# twitch
-twitch.tv
-ttvnw.net
-jtvnw.net
-live-video.net
-twitchcdn.net
-twitchsvc.net
-ext-twitch.tv
-api.twitch.tv
-gql.twitch.tv
-usher.ttvnw.net
-passport.twitch.tv
-irc-ws.chat.twitch.tv
+# twitch				#Если не работает twitch, то уберите решётку на каждой строке, кроме этой
+#twitch.tv
+#ttvnw.net
+#jtvnw.net
+#live-video.net
+#twitchcdn.net
+#twitchsvc.net
+#ext-twitch.tv
+#api.twitch.tv
+#gql.twitch.tv
+#usher.ttvnw.net
+#passport.twitch.tv
+#irc-ws.chat.twitch.tv
+
+# Расширения
 7tv.app
 7tv.io
 betterttv.net

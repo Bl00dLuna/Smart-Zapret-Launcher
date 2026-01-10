@@ -1,5 +1,5 @@
 betterdiscord.app
-cloudflare-ech.com
+cdn.discordapp.com
 discord.com
 discord.gg
 discordapp.com

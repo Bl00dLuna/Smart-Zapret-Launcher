@@ -103,3 +103,4 @@ zoom.com
 faceit.com
 habr.com
 playground.ru
+nvidia.com

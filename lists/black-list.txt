@@ -26,7 +26,6 @@ twitter.com
 x.com
 t.co
 twimg.com
-api.x.com
 cms-twdigitalassets.com
 tweetdeck.com
 grok.com
@@ -57,6 +56,7 @@ bitget.vip
 bitgetimg.com
 
 # Cloudflare
+cloudflare.com
 cloudflareclient.com
 api.cloudflareclient.com
 install.cloudflareclient.com
@@ -65,7 +65,6 @@ cloudflarewarp.com
 warp.plus
 argotunnel.com
 trycloudflare.com
-cloudflare.com
 challenges.cloudflare.com
 dash.cloudflare.com
 radar.cloudflare.com
