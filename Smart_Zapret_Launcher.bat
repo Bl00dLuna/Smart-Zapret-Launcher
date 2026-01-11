@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.45"
+set "LOCAL_VERSION=1.46"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -46,6 +46,19 @@ if %IS_ADMIN% equ 0 (
         pause
     )
     exit /b
+)
+
+:: Проверка на запуск из архива
+echo "%~dp0" | findstr /i /c:"%TEMP%" >nul
+if not errorlevel 1 (
+    cls
+    echo.
+    echo  %COL_RED%Вы запустили Smart Zapret Launcher без распаковки архива!%COL_RST%
+    echo.
+    echo  Для работы требуется распаковать файлы.
+    echo.
+    pause
+    exit
 )
 
 :: Переменные для настроек
