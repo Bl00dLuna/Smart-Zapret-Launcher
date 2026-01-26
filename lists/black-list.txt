@@ -2,6 +2,7 @@
 facebook.com
 facebook.net
 fb.com
+fb.me
 messenger.com
 internalfb.com
 instagram.com
@@ -16,8 +17,9 @@ threads.net
 oculus.com
 
 # SpeedTest
-speedtest.net
+cdn.ziffstatic.com
 ooklaserver.net
+speedtest.net
 spookla.alltelecom.ru
 speedtest.timernet.ru
 
@@ -38,28 +40,60 @@ soundcloud.com
 sndcdn.com
 soundcloud.cloud
 
-# Nexus Mods
-nexusmods.com
-supporter-files.nexus-cdn.com
-files.nexus-cdn.com
-
 # Mega(сервис для загрузки файлов)
 mega.nz
 mega.co.nz
 mega.io
 
 # Bitget
-bgbstatic.com
-bgstatic.com
-bitget.com
 bitget.vip
 bitgetimg.com
+img.bgstatic.com
+img.gurenla.com
+bgbstatic.com
+bgstatic.com
+stream.stream-cf.bitgetapp.com
+stream.abcdstable.com
+
+# Клубничка 18+
+# pornhub
+pornhub.org
+phncdn.com
+# xvideos
+xvideos.com
+xv-ru.com
+xvideos-cdn.com
+# xhamster
+xhamster.com
+xhamsterlive.com
+xhcdn.com
+doppiocdn.live
+doppiocdn.com
+# xnxx
+xnxx.com
+xnxx-ru.com
+xnxx-cdn.com
+
+# Клубничка 18+ доп
+rusuchka.com
+pornosveta.ink
+hqporner.com
+
+# metacritic
+jwplayer.com
+jwpsrv.com
+metacritic.com
+services.fandom.com
+script.wikia.nocookie.net
+
+# Хостинги для изображений
+postimgs.org
 
 # Cloudflare
 cloudflare.com
+cloudflareok.com
 cloudflareclient.com
-api.cloudflareclient.com
-install.cloudflareclient.com
+cloudflareinsights.com
 login.cloudflareaccess.com
 cloudflarewarp.com
 warp.plus
@@ -88,6 +122,7 @@ amazonaws.com
 amazonaws.net
 amazonaws.org
 aws.com
+aws.amazon.com
 awsapps.com
 s3.amazonaws.com
 sso.amazonaws.com
@@ -100,7 +135,9 @@ cloudfront.com
 cloudfront.net
 
 # Другое
+emojigraph.org
+myanimelist.net
+ntc.party
+patreon.com
 play.google.com
 play.google.ru
-metacritic.com
-myanimelist.net

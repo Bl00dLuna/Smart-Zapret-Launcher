@@ -4,6 +4,7 @@ discord.com
 discord.gg
 discordapp.com
 discordapp.net
+medea.discordapp.net
 discord.app
 discord.media
 discordcdn.com

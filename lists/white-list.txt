@@ -10,6 +10,7 @@ ya.ru
 yandex.kz
 yandex.net
 yandex.ru
+passport.yandex.ru
 
 # Онлайн кинотеатры
 amediateka.ru
@@ -23,22 +24,24 @@ start.ru
 wink.ru
 
 # Steam
-api.steampowered.com
-cloud.steampowered.com
 steamcommunity.com
 steamcontent.com
 steamgames.com
 steampowered.com
 steamstatic.com
 steamusercontent.com
+steam-chat.com
+steamgames.com
 
 # Магазины и маркетплейсы
 avito.ru
 cdek.ru
 citilink.ru
+chitai-gorod.ru
 dns-shop.ru
 eldorado.ru
 lamoda.ru
+litres.ru
 megamarket.ru
 mvideo.ru
 ozon.ru
@@ -62,6 +65,7 @@ sber.ru
 sberbank.ru
 sovcombank.ru
 tbank.ru
+tochka.com
 vtb.ru
 
 # Ведомства
@@ -71,6 +75,7 @@ gu-st.ru
 kremlin.ru
 mos.ru
 nalog.ru
+nalog.gov.ru
 sfr.gov.ru
 
 # СМИ и новости
@@ -97,10 +102,12 @@ yota.ru
 cian.ru
 donationalerts.com
 hh.ru
-zoom.com
+kontur.ru
+rabota.ru
 
 # Другое
 faceit.com
 habr.com
 playground.ru
 nvidia.com
+vc.ru

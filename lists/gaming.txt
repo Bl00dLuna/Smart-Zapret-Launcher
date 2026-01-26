@@ -69,9 +69,11 @@ fortnite.net
 
 # Roblox
 roblox.com
-www.roblox.com
 rbxcdn.com
+rbxcdn.net
+rbxlabs.com
 robloxlabs.com
+rblx.com
 arkoselabs.com
 ecsv2.roblox.com
 metrics.roblox.com

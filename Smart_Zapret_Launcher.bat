@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.46"
+set "LOCAL_VERSION=1.51"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -1189,7 +1189,7 @@ if exist "%TEMP_DIR%\bat_paths.txt" (
 if "%valid_choice%"=="0" (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                        ОШИБКА                                ║
+    echo  ║                           ОШИБКА                             ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo Неверный выбор!
@@ -1372,13 +1372,17 @@ set "source_file=%~1"
 set "target_file=%~2"
 set "use_ipset=%~3"
 
+:: Проверка пути
+if "%source_file%"=="" exit /b
+if "%target_file%"=="" exit /b
+
 if not exist "%source_file%" (
-    echo Исходный файл не найден: %source_file%
-    exit /b 1
+    echo ОШИБКА: Файл не найден: "%source_file%"
+    exit /b
 )
 
 :: Создаем папку если её нет
-for %%I in ("%target_file%") do if not exist "%%~dpI" mkdir "%%~dpI" >nul 2>&1
+if not exist "%TEMP_DIR%\dynamic_configs" mkdir "%TEMP_DIR%\dynamic_configs" >nul 2>&1
 
 type nul > "%target_file%"
 
@@ -1396,22 +1400,18 @@ for /f "usebackq delims=" %%a in ("%source_file%") do (
         if !skip_next! equ 0 (
             if "%%b"=="--ipset" (
                 if "!use_ipset!"=="0" (
-                    :: Ipset выключен
                     set "skip_next=1"
                 ) else (
-                    :: Ipset включен
                     set "processed_line=!processed_line! %%b"
                 )
             ) else if "%%b"=="--hostlist" (
                 if "!use_ipset!"=="1" (
-                    :: Ipset включен без hostlist
                     set "skip_next=1"
                 ) else (
-                    :: Ipset выключен с hostlist
                     set "processed_line=!processed_line! %%b"
                 )
             ) else if "%%b"=="--hostlist-exclude" (
-                :: Белый список активен всгда
+                :: Белый список активен всегда
                 set "processed_line=!processed_line! %%b"
             ) else (
                 set "processed_line=!processed_line! %%b"
@@ -1424,10 +1424,14 @@ for /f "usebackq delims=" %%a in ("%source_file%") do (
     :: Убираем начальный пробел
     if defined processed_line set "processed_line=!processed_line:~1!"
     
-    :: Возвращаем запятые
-    if defined processed_line set "processed_line=!processed_line:##COMMA##=,!"
-    
-    echo !processed_line! >> "%target_file%"
+    if defined processed_line (
+        :: Возвращаем запятые
+        set "processed_line=!processed_line:##COMMA##=,!"
+        :: Знаки ## на =)
+        set "processed_line=!processed_line:##==!"
+        
+        echo !processed_line!>> "%target_file%"
+    )
 )
 endlocal
 goto :eof
@@ -1521,6 +1525,9 @@ if "%HAS_NET_TOOL%"=="0" (
     where powershell >nul 2>&1 && set "HAS_NET_TOOL=2"
 )
 if "%HAS_NET_TOOL%"=="0" goto :end_update_check
+
+echo "%CMDCMDLINE%" | findstr /i "\-\-autorun" >nul
+if not errorlevel 1 goto :do_update_check
 
 :: Проверка таймера (1 час)
 set "UPDATE_MARKER=%TEMP_DIR%\update_marker"
@@ -1688,34 +1695,29 @@ if not "%net_choice%"=="1" goto reset_network
 
 cls
 echo.
-echo  %COL_CYA% ВЫПОЛНЕНИЕ СБРОСА СЕТИ %COL_RST%
-echo.
 
-echo %COL_CYA%[1/5] Отключение настроек Прокси в реестре...%COL_RST%
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f >nul 2>&1
-reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer /f >nul 2>&1
+chcp 437 >nul
+:: Запуск PS
+powershell -NoProfile -Command ^
+    "try { " ^
+    "  $reg = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings'; " ^
+    "  Set-ItemProperty -Path $reg -Name ProxyEnable -Value 0 -ErrorAction SilentlyContinue; " ^
+    "  Remove-ItemProperty -Path $reg -Name ProxyServer -ErrorAction SilentlyContinue; " ^
+    "  netsh winhttp reset proxy | Out-Null; " ^
+    "  $envUser = 'HKCU:\Environment'; " ^
+    "  $envSys = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment'; " ^
+    "  foreach ($v in @('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY')) { " ^
+    "    Remove-ItemProperty -Path $envUser -Name $v -ErrorAction SilentlyContinue; " ^
+    "    Remove-ItemProperty -Path $envSys -Name $v -ErrorAction SilentlyContinue; " ^
+    "  } " ^
+    "  netsh winsock reset | Out-Null; " ^
+    "  ipconfig /flushdns | Out-Null; " ^
+    "} catch {}" >nul 2>&1
 
-echo %COL_CYA%[2/5] Сброс системного WinHTTP...%COL_RST%
-netsh winhttp reset proxy >nul 2>&1
-
-echo %COL_CYA%[3/5] Очистка переменных среды (Environment Variables)...%COL_RST%
-:: для текущего пользователя
-reg delete "HKCU\Environment" /v HTTP_PROXY /f >nul 2>&1
-reg delete "HKCU\Environment" /v HTTPS_PROXY /f >nul 2>&1
-reg delete "HKCU\Environment" /v ALL_PROXY /f >nul 2>&1
-:: для всей системы
-reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v HTTP_PROXY /f >nul 2>&1
-reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v HTTPS_PROXY /f >nul 2>&1
-reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v ALL_PROXY /f >nul 2>&1
-
-echo %COL_CYA%[4/5] Сброс каталога Winsock...%COL_RST%
-netsh winsock reset >nul 2>&1
-
-echo %COL_CYA%[5/5] Очистка кэша DNS...%COL_RST%
-ipconfig /flushdns >nul 2>&1
+chcp 65001 >nul
 
 echo.
-echo %COL_GRN%ГОТОВО! Все сетевые настройки сброшены.%COL_RST%
+echo %COL_GRN%ГОТОВО! Сетевые настройки сброшены.%COL_RST%
 echo.
 echo Для вступления изменений в силу необходимо перезагрузить компьютер.
 echo.

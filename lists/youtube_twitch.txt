@@ -5,7 +5,6 @@ googleapis.com
 googleusercontent.com
 googlevideo.com
 gstatic.com
-gvt1.com
 jnn-pa.googleapis.com
 music.youtube.com
 wide-youtube.l.google.com
@@ -17,6 +16,9 @@ youtubei.googleapis.com
 youtubekids.com
 ytimg.com
 ytimg.l.google.com
+yt3.ggpht.com
+yt4.ggpht.com
+yt3.googleusercontent.com
 
 # twitch				#Если не работает twitch, то уберите решётку на каждой строке, кроме этой
 #twitch.tv
