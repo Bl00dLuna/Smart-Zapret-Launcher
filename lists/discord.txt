@@ -4,7 +4,6 @@ discord.com
 discord.gg
 discordapp.com
 discordapp.net
-medea.discordapp.net
 discord.app
 discord.media
 discordcdn.com
@@ -20,6 +19,6 @@ discord.gifts
 discord.new
 discord.store
 discord.tools
-discord.services
 discordpartygames.com
+media.discordapp.net
 watchdiscord.com

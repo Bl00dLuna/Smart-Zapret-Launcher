@@ -86,8 +86,9 @@ metacritic.com
 services.fandom.com
 script.wikia.nocookie.net
 
-# Хостинги для изображений
+# Изображения
 postimgs.org
+img.nvidiagrid.net
 
 # Cloudflare
 cloudflare.com

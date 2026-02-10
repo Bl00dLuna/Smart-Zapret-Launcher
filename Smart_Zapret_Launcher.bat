@@ -3,7 +3,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.51"
+set "LOCAL_VERSION=1.52"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -14,7 +14,6 @@ taskkill /f /im winws.exe >nul 2>&1
 taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
 if exist "%~dp0temporary\dynamic_configs" (
     del /q "%~dp0temporary\dynamic_configs\*.conf" >nul 2>&1
-    del /q "%~dp0temporary\dynamic_configs\*.bat" >nul 2>&1
     rd /q "%~dp0temporary\dynamic_configs" >nul 2>&1
 )
 
@@ -161,7 +160,7 @@ call :check_conflicts
 if not exist "bin\winws.exe" (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                          ОШИБКА                              ║
+    echo  ║                           ОШИБКА                             ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  Zapret не найден в bin\winws.exe
@@ -195,26 +194,24 @@ if not errorlevel 1 (
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                 SMART ZAPRET LAUNCHER v%LOCAL_VERSION%                  ║
-echo  ║                      by Bl00dLuna                            ║
+echo  ║                  SMART ZAPRET LAUNCHER v%LOCAL_VERSION%                 ║
+echo  ║                         by Bl00dLuna                         ║
+echo  ║          github.com/Bl00dLuna/Smart-Zapret-Launcher          ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 if "%USE_IPSET_GLOBAL%"=="1" (
-    echo  %COL_MAG%i - Использовать ipset global [ВКЛ]  %COL_RST% [Действует на universal конфиги и bat-файлы]
+    echo  %COL_MAG%i - Использовать ipset для universal конфигов [ВКЛ] %COL_RST%
 ) else (
-    echo  %COL_MAG%i - Использовать ipset global [ВЫКЛ]  %COL_RST% [Действует на universal конфиги и bat-файлы]
+    echo  %COL_MAG%i - Использовать ipset для universal конфигов [ВЫКЛ] %COL_RST%
 )
 if "%USE_IPSET_GAMING%"=="1" (
-    echo  %COL_MAG%g - Использовать ipset gaming [ВКЛ]  %COL_RST% [Действует только на gaming конфиги]
+    echo  %COL_MAG%g - Использовать ipset для gaming конфигов [ВКЛ] %COL_RST%
 ) else (
-    echo  %COL_MAG%g - Использовать ipset gaming [ВЫКЛ]  %COL_RST% [Действует только на gaming конфиги]
+    echo  %COL_MAG%g - Использовать ipset для gaming конфигов [ВЫКЛ] %COL_RST%
 )
 echo.
-echo  %COL_GRN%1 - Запустить Zapret (все конфиги) [Рекомендовано для постоянного использования] %COL_RST%
-echo  %COL_GRN%2 - Запустить Zapret (отдельные конфиги) [Рекомендовано для тестирования и запуска определённых конфигов] %COL_RST%
-echo  %COL_ORG%3 - Запустить Zapret (bat-файл) [Старый способ обхода] %COL_RST%
-echo.
-echo  0 - Выйти
+echo  %COL_GRN%1 - Запустить Zapret (все конфиги) %COL_RST%[Запуск всех категорий]
+echo  %COL_GRN%2 - Запустить Zapret (отдельные конфиги) %COL_RST%[Запуск определённых категорий]
 echo.
 echo.
 echo  %COL_CYA%a - Настройки автозапуска%ar_warning% %COL_RST%
@@ -223,14 +220,16 @@ if "%SHOW_LOGS%"=="1" (
 ) else (
     echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
 )
-echo  %COL_RED%n - Сброс сетевых настроек %COL_RST%
+echo  %COL_PNK%n - Сброс сетевых настроек %COL_RST%[Рекомендуется перед первым использованием Zapret]
 echo.
-set /p choice="Выберите действие [0-3] или опцию [i,g,a,l,n]: "
+echo.
+echo  0 - Выйти
+echo.
+set /p choice="Выберите действие [0-2] или опцию [i,g,a,l,n]: "
 
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
 if "%choice%"=="2" goto launch_multi_config
-if "%choice%"=="3" goto launch_bat_file
 if /i "%choice%"=="a" goto menu_autorun_settings
 if /i "%choice%"=="i" goto toggle_ipset_global
 if /i "%choice%"=="g" goto toggle_ipset_gaming
@@ -369,7 +368,7 @@ setlocal enabledelayedexpansion
 set "category_count=0"
 for /d %%d in ("configs\*") do (
     set "dir_name=%%~nxd"
-    if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="configs_bat" if /i not "!dir_name!"=="!TEMP_DIR!" (
+    if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="!TEMP_DIR!" (
         set /a category_count+=1
         echo !category_count!:!dir_name!>> "%TEMP_DIR%\categories.txt"
     )
@@ -488,7 +487,7 @@ if defined saved_configs (
     :: Запускаем конфиги с учетом текущих настроек IPSET
     call :run_selected_configs "%saved_configs%"
     :: Чтобы окно не закрылось
-    goto configs_launched
+    goto multi_configs_launched
 ) else (
     exit
 )
@@ -608,7 +607,7 @@ set "category_list="
 set "num_categories=0"
 for /d %%d in ("configs\*") do (
     set "dir_name=%%~nxd"
-    if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="configs_bat" if /i not "!dir_name!"=="!TEMP_DIR!" (
+    if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="!TEMP_DIR!" (
         set /a num_categories+=1
         set "category_!num_categories!=!dir_name!"
         set "category_list=!category_list! !num_categories!"
@@ -752,13 +751,16 @@ if "%SHOW_LOGS%"=="1" (
     echo  %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
 )
 echo.
-echo  1 - Выбрать другие конфиги
+echo  1 - Остановить Zapret и выбрать другие конфиги
 echo  2 - Остановить Zapret и вернуться в меню
 echo  3 - Остановить Zapret и выйти
 echo.
 set /p choice="Выберите действие [1-3]: "
 
-if "%choice%"=="1" goto launch_all_configs
+if "%choice%"=="1" (
+    taskkill /f /im winws.exe >nul 2>&1
+    goto launch_all_configs
+)
 if "%choice%"=="2" (
     taskkill /f /im winws.exe >nul 2>&1
     goto main_loop
@@ -773,7 +775,7 @@ goto configs_loop
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                      ВЫБОР КАТЕГОРИЙ                         ║
+echo  ║                       ВЫБОР КАТЕГОРИЙ                        ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo  Выберите категории для запуска:
@@ -811,7 +813,7 @@ endlocal & set "category_count=%category_count%"
 if %category_count%==0 (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                        ОШИБКА                                ║
+    echo  ║                           ОШИБКА                             ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  В папке configs нет нужных подкаталогов!
@@ -845,18 +847,6 @@ for %%c in (%cat_choice_multi%) do (
     call :select_config_for_category "%%c"
 )
 endlocal & set "selected_configs=%selected_configs%" & set "config_count=%config_count%"
-
-if %config_count% gtr 5 (
-    echo.
-    echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                          ОШИБКА                              ║
-    echo  ╚══════════════════════════════════════════════════════════════╝
-    echo.
-    echo  Нельзя выбрать больше 5 конфигов!
-    echo  Выбрано: %config_count%
-    timeout /t 3 >nul
-    goto launch_multi_config
-)
 
 if defined selected_configs (
     del "%LAST_CONFIGS%" >nul 2>&1
@@ -1072,201 +1062,6 @@ if "%choice%"=="3" goto exit
 echo Неверный выбор!
 timeout /t 2 >nul
 goto multi_configs_loop
-
-:launch_bat_file
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   СКАНИРОВАНИЕ BAT-ФАЙЛОВ                    ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo Сканирую bat-файлы...
-
-if not exist "configs_bat\" (
-    echo.
-    echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                          ОШИБКА                              ║
-    echo  ╚══════════════════════════════════════════════════════════════╝
-    echo.
-    echo Папка configs_bat не найдена!
-    echo.
-    pause
-    goto main_loop
-)
-
-if exist "%TEMP_DIR%\bat_list.txt" del "%TEMP_DIR%\bat_list.txt" >nul 2>&1
-if exist "%TEMP_DIR%\bat_paths.txt" del "%TEMP_DIR%\bat_paths.txt" >nul 2>&1
-
-setlocal enabledelayedexpansion
-if exist "%TEMP_DIR%\temp_sorted_bat.txt" del "%TEMP_DIR%\temp_sorted_bat.txt" >nul 2>&1
-
-for %%f in ("configs_bat\*.bat") do (
-    set "name=%%~nf"
-    set "num_part="
-    set "rest_part="
-    call :extract_number "!name!" num_part rest_part
-    if defined num_part (
-        set "prefix=0000000000!num_part!"
-        set "prefix=!prefix:~-10!"
-        set "sort_key=!prefix!!rest_part!"
-    ) else (
-        set "sort_key=9999999999!name!"
-    )
-    echo !sort_key!:%%f>> "%TEMP_DIR%\temp_sorted_bat.txt"
-)
-
-sort "%TEMP_DIR%\temp_sorted_bat.txt" /o "%TEMP_DIR%\temp_sorted_bat.txt"
-set index=1
-set bat_count=0
-for /f "tokens=1,* delims=:" %%a in ('type "%TEMP_DIR%\temp_sorted_bat.txt"') do (
-    if !index! leq 15 (
-        set "fullpath=%%b"
-        set "basename=!fullpath!"
-        for %%f in ("!fullpath!") do set "basename=%%~nxf"
-        set "basename=!basename:~0,-4!"
-        echo !index! - !basename!>> "%TEMP_DIR%\bat_list.txt"
-        echo !index!:!basename!>> "%TEMP_DIR%\bat_paths.txt"
-        set /a index+=1
-        set /a bat_count+=1
-    )
-)
-endlocal & set "bat_count=%bat_count%"
-
-if %bat_count%==0 (
-    echo.
-    echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                         ОШИБКА                               ║
-    echo  ╚══════════════════════════════════════════════════════════════╝
-    echo.
-    echo В папке configs_bat нет bat-файлов!
-    echo.
-    pause
-    goto main_loop
-)
-
-:show_bat_menu
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║               ВЫБОР BAT-ФАЙЛА ДЛЯ ЗАПУСКА                    ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-
-if exist "%TEMP_DIR%\bat_list.txt" (
-    for /f "usebackq delims=" %%a in ("%TEMP_DIR%\bat_list.txt") do (
-        echo  %%a
-    )
-)
-
-echo.
-echo  R - Пересканировать bat-файлы
-echo  B - Вернуться в меню
-echo.
-set /p bat_choice="Выберите bat-файл [1-%bat_count%] или действие: "
-
-if /i "%bat_choice%"=="R" (
-    if exist "%TEMP_DIR%\bat_list.txt" del "%TEMP_DIR%\bat_list.txt" >nul 2>&1
-    if exist "%TEMP_DIR%\bat_paths.txt" del "%TEMP_DIR%\bat_paths.txt" >nul 2>&1
-    goto launch_bat_file
-)
-if /i "%bat_choice%"=="B" (
-    if exist "%TEMP_DIR%\bat_list.txt" del "%TEMP_DIR%\bat_list.txt" >nul 2>&1
-    if exist "%TEMP_DIR%\bat_paths.txt" del "%TEMP_DIR%\bat_paths.txt" >nul 2>&1
-    goto main_loop
-)
-
-set valid_choice=0
-if exist "%TEMP_DIR%\bat_paths.txt" (
-    for /f "usebackq tokens=1,2 delims=:" %%a in ("%TEMP_DIR%\bat_paths.txt") do (
-        if "%bat_choice%"=="%%a" (
-            set valid_choice=1
-            set selected_bat_path=configs_bat\%%b.bat
-            goto run_selected_bat
-        )
-    )
-)
-
-if "%valid_choice%"=="0" (
-    echo.
-    echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                           ОШИБКА                             ║
-    echo  ╚══════════════════════════════════════════════════════════════╝
-    echo.
-    echo Неверный выбор!
-    timeout /t 2 >nul
-    goto show_bat_menu
-)
-
-:run_selected_bat
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                     ЗАПУСК BAT-ФАЙЛА                         ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo Останавливаю Zapret...
-taskkill /f /im winws.exe >nul 2>&1
-timeout /t 1 >nul
-
-for %%f in ("%selected_bat_path%") do set "bat_name=%%~nf"
-
-:: Создаем динамический bat-файл с учетом ipset
-setlocal enabledelayedexpansion
-set "dynamic_bat=!TEMP_DIR!\dynamic_configs\!bat_name!.bat"
-call :create_dynamic_file "!selected_bat_path!" "!dynamic_bat!" "!USE_IPSET_GLOBAL!"
-set "bat_to_run=!dynamic_bat!"
-
-echo Запускаю bat-файл: !bat_name!
-
-if "!SHOW_LOGS!"=="1" (
-    start "Zapret_Bat_!bat_name!" "bin\winws.exe" @"!bat_to_run!"
-) else (
-    start "Zapret_Bat_!bat_name!" /B "bin\winws.exe" @"!bat_to_run!"
-)
-endlocal
-
-goto bat_launched
-
-:bat_launched
-timeout /t 3 >nul
-
-:bat_loop
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                      BAT-ФАЙЛ ЗАПУЩЕН                        ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo Запущен bat-файл: %bat_name%
-echo.
-if "%USE_IPSET_GLOBAL%"=="1" (
-    echo   %COL_MAG%ipset global включен %COL_RST%
-) else (
-    echo  ipset выключен
-)
-if "%SHOW_LOGS%"=="1" (
-    echo  %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
-)
-echo.
-echo  1 - Остановить Zapret и выбрать другой bat-файл
-echo  2 - Остановить Zapret и вернуться в меню
-echo  3 - Остановить Zapret и выйти
-echo.
-set /p choice="Выберите действие [1-3]: "
-
-if "%choice%"=="1" (
-    taskkill /f /im winws.exe >nul 2>&1
-    goto launch_bat_file
-)
-if "%choice%"=="2" (
-    taskkill /f /im winws.exe >nul 2>&1
-    goto main_loop
-)
-if "%choice%"=="3" goto exit
-
-echo Неверный выбор!
-timeout /t 2 >nul
-goto bat_loop
 
 :run_selected_configs
 set "raw_list=%~1"
@@ -1664,7 +1459,7 @@ goto :eof
 cls
 echo.
 echo  %COL_RED%╔══════════════════════════════════════════════════════════════╗%COL_RST%
-echo  %COL_RED%║                  СБРОС СЕТЕВЫХ НАСТРОЕК                      ║%COL_RST%
+echo  %COL_RED%║                    СБРОС СЕТЕВЫХ НАСТРОЕК                    ║%COL_RST%
 echo  %COL_RED%╚══════════════════════════════════════════════════════════════╝%COL_RST%
 echo.
 echo   Эта функция удаляет "мусор" в сетевых настройках, оставшийся от

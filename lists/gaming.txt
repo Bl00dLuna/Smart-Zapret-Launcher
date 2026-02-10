@@ -10,6 +10,7 @@ fn.gg
 #ubisoftconnect.com            
 #uplay.com
 #ubiservices.com
+wildcard.cdn.ubi.com.edgekey.net
 
 # Riot client                  #Если не работает riot client, то уберите решётку на каждой строке, кроме этой
 #riotgames.com

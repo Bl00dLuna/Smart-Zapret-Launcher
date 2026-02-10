@@ -50,6 +50,9 @@
 - ipset-gaming.txt - IP-адреса для обхода блокировки (Только для gaming конфигов)
 - Остальные файлы используются в соответствующих категориях конфигов
 
+"Где можно безопасно скачать Smart Zapret Launcher?"
+- Только на странице GitHub: github.com/Bl00dLuna/Smart-Zapret-Launcher
+
 "Как поддержать разработку Smart Zapret Launcher?
 USDT: TDtR49b2nP5o8gT8P9xgzfaj2Ci6tPA3VN ← TRC20
 BTC: 1NXnyxaQFiaM5aveojQwCoxszGesD7DZX9
