@@ -63,7 +63,8 @@
 [MIT](https://github.com/Bl00dLuna/Smart-Zapret-Launcher/blob/main/LICENSE)
 
 ## 🙏 Благодарности 🙏
-[bol-van](https://github.com/bol-van) за создание такого инструмента [zapret](https://github.com/bol-van/zapret)
+[bol-van](https://github.com/bol-van) за создание инструмента [zapret](https://github.com/bol-van/zapret)
+
 
 
 
