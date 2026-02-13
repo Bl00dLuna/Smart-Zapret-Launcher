@@ -78,12 +78,7 @@
 [MIT](https://github.com/Bl00dLuna/Smart-Zapret-Launcher/blob/main/LICENSE)
 
 ## 🙏 Благодарности 🙏
-
-💥 За подсказки [V3nilla](https://github.com/V3nilla), а также за ip лист — [IPSets-For-Bypass-in-Russia](https://github.com/V3nilla/IPSets-For-Bypass-in-Russia)
-
-💥 За мотивацию и борьбу с блокировками — [zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)
-
-💥 Отдельная благодарность [bol-van](https://github.com/bol-van) за создание такого инструмента [zapret](https://github.com/bol-van/zapret)
+[bol-van](https://github.com/bol-van) за создание такого инструмента [zapret](https://github.com/bol-van/zapret)
 
 
 
