@@ -5,7 +5,7 @@
 <div align="center">
 
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.52-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.61-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 
 </div>
@@ -64,6 +64,7 @@
 
 ## 🙏 Благодарности 🙏
 [bol-van](https://github.com/bol-van) за создание инструмента [zapret](https://github.com/bol-van/zapret)
+
 
 
 
