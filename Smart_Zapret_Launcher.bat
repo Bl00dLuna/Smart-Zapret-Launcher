@@ -1103,7 +1103,6 @@ for %%c in (!sorted_list!) do (
                     echo WshShell.Run cmd, 0, False
                     ) > "%TEMP_DIR%\run_hidden.vbs"
                 )
-                :: Передаем exe и файл конфига как ДВА разных аргумента - это спасает от багов с кавычками!
                 wscript "%TEMP_DIR%\run_hidden.vbs" "%~dp0bin\winws.exe" "!final_path!"
             ) else (
                 start "Zapret_!config_name!" /B cmd /c ""%~dp0bin\winws.exe" @"!final_path!"" >nul 2>&1
