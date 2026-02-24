@@ -135,7 +135,6 @@ if not "%1"=="--autorun" (
         taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
         if exist "%TEMP_DIR%\dynamic_configs" (
             del /q "%TEMP_DIR%\dynamic_configs\*.conf" >nul 2>&1
-            del /q "%TEMP_DIR%\dynamic_configs\*.bat" >nul 2>&1
             rd /q "%TEMP_DIR%\dynamic_configs" >nul 2>&1
         )
         set "active_configs="
@@ -233,7 +232,6 @@ set /p choice="Выберите действие : "
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
 if "%choice%"=="2" goto launch_multi_config
-if "%choice%"=="3" goto launch_bat_file
 if /i "%choice%"=="a" goto menu_autorun_settings
 if /i "%choice%"=="h" goto toggle_hide_cmd
 if /i "%choice%"=="i" goto toggle_ipset_global
@@ -1084,43 +1082,31 @@ for %%c in (!sorted_list!) do (
             set "target_ipset=!USE_IPSET_GAMING!"
         )
         
+        :: Если нужен IPSET - создаем копию файла
         if "!need_processing!"=="1" (
-            :: динамический конфиг
             set "dynamic_path=%TEMP_DIR%\dynamic_configs\!config_name!.conf"
             call :create_dynamic_file "!source_path!" "!dynamic_path!" "!target_ipset!"
             set "final_path=!dynamic_path!"
-            
-            echo Запускаю: !config_name!
-            
-            if "!SHOW_LOGS!"=="1" (
-                start "Zapret_!config_name!" cmd /c "bin\winws.exe @"!final_path!" & del /q "!final_path!" >nul 2>&1"
-            ) else (
-                if "!HIDE_CMD!"=="1" (
-                    if not exist "%TEMP_DIR%\run_hidden.vbs" (
-                        echo Set WshShell = CreateObject^("WScript.Shell"^) > "%TEMP_DIR%\run_hidden.vbs"
-                        echo WshShell.Run WScript.Arguments^(0^), 0, False >> "%TEMP_DIR%\run_hidden.vbs"
-                    )
-                    wscript "%TEMP_DIR%\run_hidden.vbs" """%~dp0bin\winws.exe"" @""!final_path!"""
-                ) else (
-                    start "Zapret_!config_name!" /B cmd /c "bin\winws.exe @"!final_path!" & del /q "!final_path!" >nul 2>&1"
-                )
-            )
+        )
+        
+        echo Запускаю: !config_name!
+        
+        :: УНИВЕРСАЛЬНЫЙ БЛОК ЗАПУСКА
+        if "!SHOW_LOGS!"=="1" (
+            start "Zapret_!config_name!" cmd /c ""%~dp0bin\winws.exe" @"!final_path!""
         ) else (
-            ::  обычный конфиг
-            echo Запускаю: !config_name!
-            
-            if "!SHOW_LOGS!"=="1" (
-                start "Zapret_!config_name!" "bin\winws.exe" @"!final_path!"
-            ) else (
-                if "!HIDE_CMD!"=="1" (
-                    if not exist "%TEMP_DIR%\run_hidden.vbs" (
-                        echo Set WshShell = CreateObject^("WScript.Shell"^) > "%TEMP_DIR%\run_hidden.vbs"
-                        echo WshShell.Run WScript.Arguments^(0^), 0, False >> "%TEMP_DIR%\run_hidden.vbs"
-                    )
-                    wscript "%TEMP_DIR%\run_hidden.vbs" """%~dp0bin\winws.exe"" @""!final_path!"""
-                ) else (
-                    start "Zapret_!config_name!" /B "bin\winws.exe" @"!final_path!"
+            if "!HIDE_CMD!"=="1" (
+                if not exist "%TEMP_DIR%\run_hidden.vbs" (
+                    (
+                    echo Set WshShell = CreateObject^("WScript.Shell"^)
+                    echo cmd = "cmd.exe /c " ^& Chr^(34^) ^& Chr^(34^) ^& WScript.Arguments^(0^) ^& Chr^(34^) ^& " @" ^& Chr^(34^) ^& WScript.Arguments^(1^) ^& Chr^(34^) ^& Chr^(34^)
+                    echo WshShell.Run cmd, 0, False
+                    ) > "%TEMP_DIR%\run_hidden.vbs"
                 )
+                :: Передаем exe и файл конфига как ДВА разных аргумента - это спасает от багов с кавычками!
+                wscript "%TEMP_DIR%\run_hidden.vbs" "%~dp0bin\winws.exe" "!final_path!"
+            ) else (
+                start "Zapret_!config_name!" /B cmd /c ""%~dp0bin\winws.exe" @"!final_path!"" >nul 2>&1
             )
         )
         
