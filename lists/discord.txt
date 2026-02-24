@@ -19,6 +19,7 @@ discord.gifts
 discord.new
 discord.store
 discord.tools
+discordsays.com
 discordpartygames.com
 media.discordapp.net
 watchdiscord.com

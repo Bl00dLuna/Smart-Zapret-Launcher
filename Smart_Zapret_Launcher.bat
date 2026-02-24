@@ -1,21 +1,19 @@
 @echo off
+
+if defined WT_SESSION (
+    start "" conhost.exe "%~f0" %*
+    exit
+)
+
 chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.52"
+set "LOCAL_VERSION=1.61"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
 set "REPO_URL=https://github.com/%GITHUB_USER%/%GITHUB_REPO%"
-
-:: ЧИСТКА ПРИ СТАРТЕ (При аварийном закрытии)
-taskkill /f /im winws.exe >nul 2>&1
-taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
-if exist "%~dp0temporary\dynamic_configs" (
-    del /q "%~dp0temporary\dynamic_configs\*.conf" >nul 2>&1
-    rd /q "%~dp0temporary\dynamic_configs" >nul 2>&1
-)
 
 set "IS_ADMIN=0"
 
@@ -35,7 +33,7 @@ if %IS_ADMIN% equ 0 (
     )
 
     echo Запрос прав администратора...
-    PowerShell -Command "Start-Process '%~s0' -ArgumentList '--admin' -Verb RunAs" 2>nul
+    PowerShell -Command "Start-Process 'conhost.exe' -ArgumentList '\"%~f0\" --admin' -Verb RunAs" 2>nul
     if errorlevel 1 (
         echo.
         echo ОШИБКА: Не удалось запросить права администратора
@@ -61,16 +59,11 @@ if not errorlevel 1 (
 )
 
 :: Переменные для настроек
-set "SHOW_LOGS="
-set "USE_IPSET_GLOBAL="
-set "USE_IPSET_GAMING="
-set "TEMP_DIR=%~dp0temporary"
+set "TEMP_DIR=temporary"
+set "SETTINGS_FILE=%TEMP_DIR%\settings.ini"
 set "LAST_CONFIGS=%TEMP_DIR%\last_configs.txt"
 set "LAST_CONFIGS_ALL=%TEMP_DIR%\last_configs_all.txt"
 set "AUTORUN_CONFIGS=%TEMP_DIR%\autorun_configs.txt"
-set "LOGS_SETTING=%TEMP_DIR%\logs_setting.txt"
-set "IPSET_GLOBAL_SETTING=%TEMP_DIR%\ipset_global_setting.txt"
-set "IPSET_GAMING_SETTING=%TEMP_DIR%\ipset_gaming_setting.txt"
 set "IPSET_GLOBAL_FILE=lists\ipset-global.txt"
 set "IPSET_GAMING_FILE=lists\ipset-gaming.txt"
 
@@ -117,33 +110,37 @@ if "%VERSION%" == "10.0" (
     call set "COL_RST=%%ESC%%[0m"
 )
 :: Создаем папку для временных файлов если нет
-if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%" >nul 2>&1
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
 
-:: Загружаем настройки из файлов
-if not defined SHOW_LOGS (
-    if exist "%LOGS_SETTING%" (
-        set /p SHOW_LOGS=<"%LOGS_SETTING%" 2>nul
-    ) else (
-        set "SHOW_LOGS=0"
-        echo | set /p="0" > "%LOGS_SETTING%"
+if exist "%SETTINGS_FILE%" (
+    for /f "usebackq tokens=1,* delims==" %%a in ("%SETTINGS_FILE%") do (
+        set "%%a=%%b"
     )
 )
 
-if not defined USE_IPSET_GLOBAL (
-    if exist "%IPSET_GLOBAL_SETTING%" (
-        set /p USE_IPSET_GLOBAL=<"%IPSET_GLOBAL_SETTING%" 2>nul
-    ) else (
-        set "USE_IPSET_GLOBAL=0"
-        echo | set /p="0" > "%IPSET_GLOBAL_SETTING%"
-    )
-)
+:: Дефолт значения (если файл пуст или первый запуск)
+if not defined SHOW_LOGS set "SHOW_LOGS=0"
+if not defined USE_IPSET_GLOBAL set "USE_IPSET_GLOBAL=0"
+if not defined USE_IPSET_GAMING set "USE_IPSET_GAMING=0"
+if not defined HIDE_CMD set "HIDE_CMD=0"
 
-if not defined USE_IPSET_GAMING (
-    if exist "%IPSET_GAMING_SETTING%" (
-        set /p USE_IPSET_GAMING=<"%IPSET_GAMING_SETTING%" 2>nul
+:: ЧИСТКА ПРИ СТАРТЕ + ФОН.РАБОТА
+if not "%1"=="--autorun" (
+    tasklist /FI "IMAGENAME eq winws.exe" 2>nul | find /i "winws.exe" >nul
+    if not errorlevel 1 (
+        :: winws работает
+        goto configs_loop
     ) else (
-        set "USE_IPSET_GAMING=0"
-        echo | set /p="0" > "%IPSET_GAMING_SETTING%"
+        :: winws не работает
+        taskkill /f /fi "windowtitle eq Zapret_*" >nul 2>&1
+        if exist "%TEMP_DIR%\dynamic_configs" (
+            del /q "%TEMP_DIR%\dynamic_configs\*.conf" >nul 2>&1
+            del /q "%TEMP_DIR%\dynamic_configs\*.bat" >nul 2>&1
+            rd /q "%TEMP_DIR%\dynamic_configs" >nul 2>&1
+        )
+        set "active_configs="
+        set "config_count=0"
+        set "LAUNCH_MODE=0"
     )
 )
 
@@ -160,7 +157,7 @@ call :check_conflicts
 if not exist "bin\winws.exe" (
     echo.
     echo  ╔══════════════════════════════════════════════════════════════╗
-    echo  ║                           ОШИБКА                             ║
+    echo  ║                            ОШИБКА                            ║
     echo  ╚══════════════════════════════════════════════════════════════╝
     echo.
     echo  Zapret не найден в bin\winws.exe
@@ -200,37 +197,45 @@ echo  ║          github.com/Bl00dLuna/Smart-Zapret-Launcher          ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 if "%USE_IPSET_GLOBAL%"=="1" (
-    echo  %COL_MAG%i - Использовать ipset для universal конфигов [ВКЛ] %COL_RST%
+echo  %COL_MAG%i - Использовать ipset для universal конфигов [ВКЛ] %COL_RST%
 ) else (
-    echo  %COL_MAG%i - Использовать ipset для universal конфигов [ВЫКЛ] %COL_RST%
+echo  %COL_MAG%i - Использовать ipset для universal конфигов [ВЫКЛ] %COL_RST%
 )
 if "%USE_IPSET_GAMING%"=="1" (
-    echo  %COL_MAG%g - Использовать ipset для gaming конфигов [ВКЛ] %COL_RST%
+echo  %COL_MAG%g - Использовать ipset для gaming конфигов [ВКЛ] %COL_RST%
 ) else (
-    echo  %COL_MAG%g - Использовать ipset для gaming конфигов [ВЫКЛ] %COL_RST%
+echo  %COL_MAG%g - Использовать ipset для gaming конфигов [ВЫКЛ] %COL_RST%
 )
 echo.
 echo  %COL_GRN%1 - Запустить Zapret (все конфиги) %COL_RST%[Запуск всех категорий]
 echo  %COL_GRN%2 - Запустить Zapret (отдельные конфиги) %COL_RST%[Запуск определённых категорий]
 echo.
 echo.
-echo  %COL_CYA%a - Настройки автозапуска%ar_warning% %COL_RST%
-if "%SHOW_LOGS%"=="1" (
-    echo  %COL_YEL%l - Включить логи [ВКЛ] %COL_RST%
+if "%HIDE_CMD%"=="1" (
+    echo  %COL_BLU%h - Скрывать командную строку после запуска конфигов [ВКЛ] %COL_RST%
 ) else (
-    echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
+    echo  %COL_BLU%h - Скрывать командную строку после запуска конфигов [ВЫКЛ] %COL_RST%
 )
+if "%SHOW_LOGS%"=="1" (
+echo  %COL_YEL%l - Включить логи [ВКЛ] %COL_RST%
+) else (
+echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
+)
+echo.
+echo  %COL_CYA%a - Настройки автозапуска%ar_warning% %COL_RST%
 echo  %COL_PNK%n - Сброс сетевых настроек %COL_RST%[Рекомендуется перед первым использованием Zapret]
 echo.
 echo.
 echo  0 - Выйти
 echo.
-set /p choice="Выберите действие [0-2] или опцию [i,g,a,l,n]: "
+set /p choice="Выберите действие : "
 
 if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
 if "%choice%"=="2" goto launch_multi_config
+if "%choice%"=="3" goto launch_bat_file
 if /i "%choice%"=="a" goto menu_autorun_settings
+if /i "%choice%"=="h" goto toggle_hide_cmd
 if /i "%choice%"=="i" goto toggle_ipset_global
 if /i "%choice%"=="g" goto toggle_ipset_gaming
 if /i "%choice%"=="l" goto toggle_logs
@@ -239,47 +244,25 @@ echo Неверный выбор!
 timeout /t 2 >nul
 goto main_loop
 
+:toggle_hide_cmd
+if "%HIDE_CMD%"=="1" (set "HIDE_CMD=0" & echo Фоновый режим выключен) else (set "HIDE_CMD=1" & echo Фоновый режим включен)
+call :save_settings
+timeout /t 1 >nul & goto main_loop
+
 :toggle_ipset_global
-if "%USE_IPSET_GLOBAL%"=="1" (
-    set "USE_IPSET_GLOBAL=0"
-    echo ipset global выключен
-) else (
-    set "USE_IPSET_GLOBAL=1"
-    set "USE_IPSET_GAMING=0"
-    echo ipset global включен
-)
-echo | set /p="%USE_IPSET_GLOBAL%" > "%IPSET_GLOBAL_SETTING%"
-echo | set /p="%USE_IPSET_GAMING%" > "%IPSET_GAMING_SETTING%"
-echo Настройка сохранена
-timeout /t 1 >nul
-goto main_loop
+if "%USE_IPSET_GLOBAL%"=="1" (set "USE_IPSET_GLOBAL=0" & echo ipset global выключен) else (set "USE_IPSET_GLOBAL=1" & echo ipset global включен)
+call :save_settings
+timeout /t 1 >nul & goto main_loop
 
 :toggle_ipset_gaming
-if "%USE_IPSET_GAMING%"=="1" (
-    set "USE_IPSET_GAMING=0"
-    echo ipset gaming выключен
-) else (
-    set "USE_IPSET_GAMING=1"
-    set "USE_IPSET_GLOBAL=0"
-    echo ipset gaming включен
-)
-echo | set /p="%USE_IPSET_GLOBAL%" > "%IPSET_GLOBAL_SETTING%"
-echo | set /p="%USE_IPSET_GAMING%" > "%IPSET_GAMING_SETTING%"
-echo Настройка сохранена
-timeout /t 1 >nul
-goto main_loop
+if "%USE_IPSET_GAMING%"=="1" (set "USE_IPSET_GAMING=0" & echo ipset gaming выключен) else (set "USE_IPSET_GAMING=1" & echo ipset gaming включен)
+call :save_settings
+timeout /t 1 >nul & goto main_loop
 
 :toggle_logs
-if "%SHOW_LOGS%"=="1" (
-    set "SHOW_LOGS=0"
-    echo Логи отключены
-) else (
-    set "SHOW_LOGS=1"
-    echo Логи включены
-)
-echo | set /p="%SHOW_LOGS%" > "%LOGS_SETTING%"
-timeout /t 1 >nul
-goto main_loop
+if "%SHOW_LOGS%"=="1" (set "SHOW_LOGS=0" & echo Логи отключены) else (set "SHOW_LOGS=1" & echo Логи включены)
+call :save_settings
+timeout /t 1 >nul & goto main_loop
 
 :menu_autorun_settings
 cls
@@ -463,7 +446,7 @@ for /f "tokens=2 delims=:" %%a in ('type "%AUTORUN_CONFIGS%" 2^>nul') do (
     if "!current_found!"=="0" (
         echo.
         echo  ╔══════════════════════════════════════════════════════════════╗
-        echo  ║                          ОШИБКА                              ║
+        echo  ║                            ОШИБКА                            ║
         echo  ╚══════════════════════════════════════════════════════════════╝
         echo.
         echo  %COL_RED%Конфиг "!config_name!" не найден!%COL_RST%
@@ -484,19 +467,19 @@ if "!missing_error!"=="1" (
 endlocal & set "saved_configs=%saved_configs%"
 
 if defined saved_configs (
-    :: Запускаем конфиги с учетом текущих настроек IPSET
     call :run_selected_configs "%saved_configs%"
-    :: Чтобы окно не закрылось
-    goto multi_configs_launched
+    goto configs_launched
 ) else (
     exit
 )
 
 :launch_all_configs
+set "LAUNCH_MODE=1"
+call :save_settings
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                    ЗАПУСК ВСЕХ КОНФИГОВ                      ║
+echo  ║                     ЗАПУСК ВСЕХ КОНФИГОВ                     ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 
@@ -728,7 +711,26 @@ timeout /t 2 >nul
 goto show_simple_menu_all
 
 :configs_launched
+call :save_settings
+
+if "%HIDE_CMD%"=="1" if "%SHOW_LOGS%"=="0" (
+    cls
+    echo.
+    echo  ╔══════════════════════════════════════════════════════════════╗
+    echo  ║                       ZAPRET ЗАПУЩЕН                         ║
+    echo  ╚══════════════════════════════════════════════════════════════╝
+    echo.
+    echo  Запущено конфигов: %config_count%
+    echo  Конфиги успешно переведены в фоновый режим.
+    echo.
+    echo  %COL_YEL%Окно будет закрыто через 5 секунд...%COL_RST%
+    echo  Чтобы изменить настройки или остановить zapret,
+    echo  просто запустите лаунчер еще раз.
+    timeout /t 5 >nul
+    exit
+)
 timeout /t 3 >nul
+goto configs_loop
 
 :configs_loop
 cls
@@ -752,26 +754,35 @@ if "%SHOW_LOGS%"=="1" (
 )
 echo.
 echo  1 - Остановить Zapret и выбрать другие конфиги
-echo  2 - Остановить Zapret и вернуться в меню
+echo  2 - Остановить Zapret и вернуться в главное меню
 echo  3 - Остановить Zapret и выйти
 echo.
-set /p choice="Выберите действие [1-3]: "
+set /p choice="Выберите действие: "
 
 if "%choice%"=="1" (
     taskkill /f /im winws.exe >nul 2>&1
-    goto launch_all_configs
+    set "active_configs=" & set "config_count=0"
+    call :save_settings
+    if "%LAUNCH_MODE%"=="1" goto launch_all_configs
+    if "%LAUNCH_MODE%"=="2" goto launch_multi_config
+    goto main_loop
 )
 if "%choice%"=="2" (
     taskkill /f /im winws.exe >nul 2>&1
+    set "active_configs=" & set "config_count=0" & set "LAUNCH_MODE=0"
+    call :save_settings
     goto main_loop
 )
-if "%choice%"=="3" goto exit
-
-echo Неверный выбор!
-timeout /t 2 >nul
+if "%choice%"=="3" (
+    set "active_configs=" & set "config_count=0" & set "LAUNCH_MODE=0"
+    call :save_settings
+    goto exit
+)
 goto configs_loop
 
 :launch_multi_config
+set "LAUNCH_MODE=2"
+call :save_settings
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
@@ -831,7 +842,7 @@ if /i "%cat_choice_multi%"=="B" goto main_loop
 if /i "%cat_choice_multi%"=="T" (
     if exist "%LAST_CONFIGS%" (
         call :run_saved_configs
-        goto multi_configs_launched
+        goto configs_launched
     ) else (
         echo Нет сохраненных конфигов!
         timeout /t 2 >nul
@@ -863,7 +874,7 @@ if defined selected_configs (
     endlocal
     
     call :run_selected_configs "%selected_configs%"
-    goto multi_configs_launched
+    goto configs_launched
 ) else (
     echo Не выбрано ни одного конфига!
     timeout /t 3 >nul
@@ -904,7 +915,7 @@ if "%config_count%"=="0" (
 )
 
 call :run_selected_configs "%saved_configs%"
-goto multi_configs_launched
+goto configs_launched
 
 :select_config_for_category
 set "cat_num=%~1"
@@ -1019,56 +1030,12 @@ echo Неверный выбор: !choice!
 timeout /t 2 >nul
 goto show_simple_menu
 
-:multi_configs_launched
-timeout /t 3 >nul
-
-:multi_configs_loop
-cls
-echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                    ZAPRET ЗАПУЩЕН v%LOCAL_VERSION%                      ║
-echo  ╚══════════════════════════════════════════════════════════════╝
-echo.
-echo Запущено конфигов: %config_count%
-echo Запущены конфиги: %active_configs%
-echo.
-if "%USE_IPSET_GLOBAL%"=="1" (
-    echo   %COL_MAG%ipset global включен %COL_RST%
-) else if "%USE_IPSET_GAMING%"=="1" (
-    echo   %COL_MAG%ipset gaming включен %COL_RST%
-) else (
-    echo  ipset выключен
-)
-if "%SHOW_LOGS%"=="1" (
-    echo  %COL_YEL%Логи включены - окна WinWS открыты %COL_RST%
-)
-echo.
-echo  1 - Остановить Zapret и выбрать другие конфиги
-echo  2 - Остановить Zapret и вернуться в меню
-echo  3 - Остановить Zapret и выйти
-echo.
-set /p choice="Выберите действие [1-3]: "
-
-if "%choice%"=="1" (
-    taskkill /f /im winws.exe >nul 2>&1
-    goto launch_multi_config
-)
-if "%choice%"=="2" (
-    taskkill /f /im winws.exe >nul 2>&1
-    goto main_loop
-)
-if "%choice%"=="3" goto exit
-
-echo Неверный выбор!
-timeout /t 2 >nul
-goto multi_configs_loop
-
 :run_selected_configs
 set "raw_list=%~1"
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                      ЗАПУСК КОНФИГОВ                         ║
+echo  ║                     ЗАПУСК КОНФИГОВ                          ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo Останавливаю Zapret...
@@ -1081,30 +1048,21 @@ setlocal enabledelayedexpansion
 
 :: Сорт по приоритету
 set "sorted_list="
-for %%c in (!raw_list!) do (
-    echo "%%c" | findstr /i "\\discord\\" >nul && set "sorted_list=!sorted_list! %%c"
-)
-for %%c in (!raw_list!) do (
-    echo "%%c" | findstr /i "\\youtube_twitch\\" >nul && set "sorted_list=!sorted_list! %%c"
-)
-for %%c in (!raw_list!) do (
-    echo "%%c" | findstr /i "\\gaming\\" >nul && set "sorted_list=!sorted_list! %%c"
-)
-for %%c in (!raw_list!) do (
-    echo "%%c" | findstr /i /v "\\discord\\ \\youtube_twitch\\ \\gaming\\ \\universal\\" >nul && set "sorted_list=!sorted_list! %%c"
-)
-for %%c in (!raw_list!) do (
-    echo "%%c" | findstr /i "\\universal\\" >nul && set "sorted_list=!sorted_list! %%c"
-)
+for %%c in (!raw_list!) do echo "%%c" | findstr /i "\\discord\\" >nul && set "sorted_list=!sorted_list! %%c"
+for %%c in (!raw_list!) do echo "%%c" | findstr /i "\\youtube_twitch\\" >nul && set "sorted_list=!sorted_list! %%c"
+for %%c in (!raw_list!) do echo "%%c" | findstr /i "\\gaming\\" >nul && set "sorted_list=!sorted_list! %%c"
+for %%c in (!raw_list!) do echo "%%c" | findstr /i /v "\\discord\\ \\youtube_twitch\\ \\gaming\\ \\universal\\" >nul && set "sorted_list=!sorted_list! %%c"
+for %%c in (!raw_list!) do echo "%%c" | findstr /i "\\universal\\" >nul && set "sorted_list=!sorted_list! %%c"
+
 :: Папка для динамических конфигов
 if not exist "%TEMP_DIR%\dynamic_configs" mkdir "%TEMP_DIR%\dynamic_configs" >nul 2>&1
-:: Уже отсорт список
+
+:: Запуск
 for %%c in (!sorted_list!) do (
     for %%f in ("%%c") do (
         set "config_name=%%~nf"
         set "source_path=%%c"
         
-        :: запуск ориг файла
         set "final_path=%%c"
         set "need_processing=0"
         set "target_ipset="
@@ -1127,7 +1085,7 @@ for %%c in (!sorted_list!) do (
         )
         
         if "!need_processing!"=="1" (
-            :: Динамик конф
+            :: динамический конфиг
             set "dynamic_path=%TEMP_DIR%\dynamic_configs\!config_name!.conf"
             call :create_dynamic_file "!source_path!" "!dynamic_path!" "!target_ipset!"
             set "final_path=!dynamic_path!"
@@ -1135,18 +1093,34 @@ for %%c in (!sorted_list!) do (
             echo Запускаю: !config_name!
             
             if "!SHOW_LOGS!"=="1" (
-                start "Zapret_!config_name!" cmd /c ""bin\winws.exe" @"!final_path!" & del /q "!final_path!" >nul 2>&1"
+                start "Zapret_!config_name!" cmd /c "bin\winws.exe @"!final_path!" & del /q "!final_path!" >nul 2>&1"
             ) else (
-                start "Zapret_!config_name!" /B cmd /c ""bin\winws.exe" @"!final_path!" & del /q "!final_path!" >nul 2>&1"
+                if "!HIDE_CMD!"=="1" (
+                    if not exist "%TEMP_DIR%\run_hidden.vbs" (
+                        echo Set WshShell = CreateObject^("WScript.Shell"^) > "%TEMP_DIR%\run_hidden.vbs"
+                        echo WshShell.Run WScript.Arguments^(0^), 0, False >> "%TEMP_DIR%\run_hidden.vbs"
+                    )
+                    wscript "%TEMP_DIR%\run_hidden.vbs" """%~dp0bin\winws.exe"" @""!final_path!"""
+                ) else (
+                    start "Zapret_!config_name!" /B cmd /c "bin\winws.exe @"!final_path!" & del /q "!final_path!" >nul 2>&1"
+                )
             )
         ) else (
-            :: Обычный конф
+            ::  обычный конфиг
             echo Запускаю: !config_name!
             
             if "!SHOW_LOGS!"=="1" (
                 start "Zapret_!config_name!" "bin\winws.exe" @"!final_path!"
             ) else (
-                start "Zapret_!config_name!" /B "bin\winws.exe" @"!final_path!"
+                if "!HIDE_CMD!"=="1" (
+                    if not exist "%TEMP_DIR%\run_hidden.vbs" (
+                        echo Set WshShell = CreateObject^("WScript.Shell"^) > "%TEMP_DIR%\run_hidden.vbs"
+                        echo WshShell.Run WScript.Arguments^(0^), 0, False >> "%TEMP_DIR%\run_hidden.vbs"
+                    )
+                    wscript "%TEMP_DIR%\run_hidden.vbs" """%~dp0bin\winws.exe"" @""!final_path!"""
+                ) else (
+                    start "Zapret_!config_name!" /B "bin\winws.exe" @"!final_path!"
+                )
             )
         )
         
@@ -1159,7 +1133,24 @@ for %%c in (!sorted_list!) do (
     )
 )
 
-endlocal & set "active_configs=%active_configs%" & set "config_count=%run_count%"
+if not defined active_configs set "active_configs=Нет"
+for /f "tokens=1,* delims=:" %%A in ("!run_count!:!active_configs!") do (
+    endlocal
+    set "config_count=%%A"
+    set "active_configs=%%B"
+)
+goto :eof
+
+:save_settings
+(
+echo SHOW_LOGS=%SHOW_LOGS%
+echo USE_IPSET_GLOBAL=%USE_IPSET_GLOBAL%
+echo USE_IPSET_GAMING=%USE_IPSET_GAMING%
+echo HIDE_CMD=%HIDE_CMD%
+echo active_configs=%active_configs%
+echo config_count=%config_count%
+echo LAUNCH_MODE=%LAUNCH_MODE%
+) > "%SETTINGS_FILE%"
 goto :eof
 
 :create_dynamic_file
@@ -1385,7 +1376,7 @@ chcp 65001 >nul
 cls
 echo.
 echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║                   ДОСТУПНО ОБНОВЛЕНИЕ!                       ║
+echo  ║                     ДОСТУПНО ОБНОВЛЕНИЕ!                     ║
 echo  ╚══════════════════════════════════════════════════════════════╝
 echo.
 echo   Текущая версия: %LOCAL_VERSION%
@@ -1408,16 +1399,8 @@ set "conflict_found=0"
 set "conflict_names="
 set "kill_list="
 
-:: Проверка GoodbyeDPI
-tasklist /FI "IMAGENAME eq goodbyedpi.exe" 2>nul | find /i "goodbyedpi.exe" >nul
-if not errorlevel 1 (
-    set "conflict_found=1"
-    set "conflict_names=!conflict_names! [GoodbyeDPI]"
-    set "kill_list=!kill_list! goodbyedpi.exe"
-)
-
-:: Проверка VPN
-for %%p in (openvpn.exe wireguard.exe ProtonVPN.exe tun2socks.exe) do (
+:: Проверка конфликтов
+for %%p in (goodbyedpi.exe openvpn.exe wireguard.exe ProtonVPN.exe tun2socks.exe) do (
     tasklist /FI "IMAGENAME eq %%p" 2>nul | find /i "%%p" >nul
     if not errorlevel 1 (
         set "conflict_found=1"

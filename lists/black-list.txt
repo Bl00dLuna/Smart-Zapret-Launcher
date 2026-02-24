@@ -50,7 +50,6 @@ bitget.vip
 bitgetimg.com
 img.bgstatic.com
 img.gurenla.com
-bgbstatic.com
 bgstatic.com
 stream.stream-cf.bitgetapp.com
 stream.abcdstable.com
@@ -89,6 +88,10 @@ script.wikia.nocookie.net
 # Изображения
 postimgs.org
 img.nvidiagrid.net
+
+# itch.io
+itch.io
+img.itch.zone
 
 # Cloudflare
 cloudflare.com
