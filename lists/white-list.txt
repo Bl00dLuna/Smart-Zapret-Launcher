@@ -10,10 +10,10 @@ ya.ru
 yandex.kz
 yandex.net
 yandex.ru
-passport.yandex.ru
 
 # Онлайн кинотеатры
 amediateka.ru
+ctc.ru
 ivi.ru
 kion.ru
 kinopoisk.ru
@@ -31,9 +31,9 @@ steampowered.com
 steamstatic.com
 steamusercontent.com
 steam-chat.com
-steamgames.com
 
 # Магазины и маркетплейсы
+aliexpress.ru
 avito.ru
 cdek.ru
 citilink.ru
@@ -46,6 +46,7 @@ megamarket.ru
 mvideo.ru
 ozon.ru
 pochta.ru
+plati.market
 samokat.ru
 vkusvill.ru
 wb.ru

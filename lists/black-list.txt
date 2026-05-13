@@ -86,8 +86,9 @@ services.fandom.com
 script.wikia.nocookie.net
 
 # Изображения
-postimgs.org
 img.nvidiagrid.net
+postimgs.org
+static.wikia.nocookie.net
 
 # itch.io
 itch.io
@@ -145,3 +146,4 @@ ntc.party
 patreon.com
 play.google.com
 play.google.ru
+moddb.com

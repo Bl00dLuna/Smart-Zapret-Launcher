@@ -9,7 +9,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.61"
+set "LOCAL_VERSION=1.62"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -1385,7 +1385,7 @@ set "conflict_names="
 set "kill_list="
 
 :: Проверка конфликтов
-for %%p in (goodbyedpi.exe openvpn.exe wireguard.exe ProtonVPN.exe tun2socks.exe) do (
+for %%p in (goodbyedpi.exe openvpn.exe wireguard.exe ProtonVPN.exe tun2socks.exe Adguard.exe AdguardSvc.exe AmneziaVPN.exe Amneziawg.exe) do (
     tasklist /FI "IMAGENAME eq %%p" 2>nul | find /i "%%p" >nul
     if not errorlevel 1 (
         set "conflict_found=1"
