@@ -9,7 +9,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.62"
+set "LOCAL_VERSION=1.63"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -347,13 +347,24 @@ echo.
 del "%TEMP_DIR%\categories.txt" >nul 2>&1
 setlocal enabledelayedexpansion
 set "category_count=0"
-for /d %%d in ("configs\*") do (
-    set "dir_name=%%~nxd"
-    if /i not "!dir_name!"=="lists" if /i not "!dir_name!"=="bin" if /i not "!dir_name!"=="!TEMP_DIR!" (
-        set /a category_count+=1
-        echo !category_count!:!dir_name!>> "%TEMP_DIR%\categories.txt"
-    )
+
+if exist "configs\discord\" (
+    set /a category_count+=1
+    echo !category_count!:discord>> "%TEMP_DIR%\categories.txt"
 )
+if exist "configs\youtube_twitch\" (
+    set /a category_count+=1
+    echo !category_count!:youtube_twitch>> "%TEMP_DIR%\categories.txt"
+)
+if exist "configs\gaming\" (
+    set /a category_count+=1
+    echo !category_count!:gaming>> "%TEMP_DIR%\categories.txt"
+)
+if exist "configs\universal\" (
+    set /a category_count+=1
+    echo !category_count!:universal>> "%TEMP_DIR%\categories.txt"
+)
+
 for /f "tokens=1,2 delims=:" %%a in ('type "%TEMP_DIR%\categories.txt"') do (
     echo  %%a - %%b
 )
@@ -375,11 +386,32 @@ for %%c in (%cat_choice_ar%) do (
 endlocal & set "selected_configs=%selected_configs%"
 
 if defined selected_configs (
-    :: Сохраняем список конфигов
-    del "%AUTORUN_CONFIGS%" >nul 2>&1
+    set "sorted_autorun_configs="
     setlocal enabledelayedexpansion
-    set index=1
     for %%c in (!selected_configs!) do (
+        echo "%%c" | findstr /i "\\discord\\" >nul
+        if not errorlevel 1 set "sorted_autorun_configs=!sorted_autorun_configs! %%c"
+    )
+    for %%c in (!selected_configs!) do (
+        echo "%%c" | findstr /i "\\youtube_twitch\\" >nul
+        if not errorlevel 1 set "sorted_autorun_configs=!sorted_autorun_configs! %%c"
+    )
+    for %%c in (!selected_configs!) do (
+        echo "%%c" | findstr /i "\\gaming\\" >nul
+        if not errorlevel 1 set "sorted_autorun_configs=!sorted_autorun_configs! %%c"
+    )
+    for %%c in (!selected_configs!) do (
+        echo "%%c" | findstr /i /v "\\discord\\ \\youtube_twitch\\ \\gaming\\ \\universal\\" >nul
+        if not errorlevel 1 set "sorted_autorun_configs=!sorted_autorun_configs! %%c"
+    )
+    for %%c in (!selected_configs!) do (
+        echo "%%c" | findstr /i "\\universal\\" >nul
+        if not errorlevel 1 set "sorted_autorun_configs=!sorted_autorun_configs! %%c"
+    )
+    
+    del "%AUTORUN_CONFIGS%" >nul 2>&1
+    set index=1
+    for %%c in (!sorted_autorun_configs!) do (
         for %%f in ("%%c") do (
             set "config_name=%%~nf"
             set "config_name=!config_name: =!"
@@ -389,7 +421,6 @@ if defined selected_configs (
     )
     endlocal
     
-    :: Создаем задачу в планировщике
     echo.
     echo Создаю задачу автозапуска...
     schtasks /create /tn "SmartZapretLauncher_Autorun" /tr "'%~f0' --autorun" /sc onlogon /rl highest /f >nul

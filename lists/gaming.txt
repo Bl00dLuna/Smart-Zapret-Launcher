@@ -68,19 +68,6 @@ fortnite.com
 fortnite-vod.akamaized.net
 fortnite.net
 
-# Roblox
-roblox.com
-rbxcdn.com
-rbxcdn.net
-rbxlabs.com
-robloxlabs.com
-rblx.com
-arkoselabs.com
-ecsv2.roblox.com
-metrics.roblox.com
-apis.roblox.com
-funcaptcha.com
-
 # Apex Legends & Titanfall 2
 apexlegends.com
 respawn.com
@@ -119,15 +106,18 @@ datalake.v2.iesdev.com
 
 # Dead By Daylight
 deadbydaylight.com
-dbd.starbreeze.com
 starbreeze.com
 bhvr.com
 behaviourinteractive.com
 
 # Beat Saber
+beatleader.xyz
 beatsaver.com
 beatmods.com
+bsaber.com
+bsmanager.io
 modelsaber.com
+scoresaber.com
 
 # VRchat
 api.vrchat.cloud
