@@ -9,7 +9,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.63"
+set "LOCAL_VERSION=1.64"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
