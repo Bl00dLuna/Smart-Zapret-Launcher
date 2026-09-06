@@ -9,7 +9,7 @@ chcp 65001 > nul
 cd /d "%~dp0"
 title Smart Zapret Launcher
 
-set "LOCAL_VERSION=1.64"
+set "LOCAL_VERSION=1.71"
 set "GITHUB_USER=Bl00dLuna"
 set "GITHUB_REPO=Smart-Zapret-Launcher"
 set "VERSION_URL=https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/main/check_update/update.txt"
@@ -90,7 +90,7 @@ for /f "tokens=4-5 delims=. " %%i in ('ver') do set VERSION=%%i.%%j
 if "%VERSION%" == "10.0" (
     for /F %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
     
-    :: Стандартные цвета(яркие)
+    :: Стандартные цвета
     call set "COL_GRY=%%ESC%%[90m"
     call set "COL_RED=%%ESC%%[91m"
     call set "COL_GRN=%%ESC%%[92m"
@@ -106,6 +106,8 @@ if "%VERSION%" == "10.0" (
     call set "COL_LIM=%%ESC%%[38;5;118m"
     call set "COL_GLD=%%ESC%%[38;5;220m"
     call set "COL_VIO=%%ESC%%[38;5;129m"
+    call set "COL_LYL=%%ESC%%[38;5;226m"
+
     :: Сброс цвета
     call set "COL_RST=%%ESC%%[0m"
 )
@@ -123,6 +125,7 @@ if not defined SHOW_LOGS set "SHOW_LOGS=0"
 if not defined USE_IPSET_GLOBAL set "USE_IPSET_GLOBAL=0"
 if not defined USE_IPSET_GAMING set "USE_IPSET_GAMING=0"
 if not defined HIDE_CMD set "HIDE_CMD=0"
+if not defined CHECK_UPDATES set "CHECK_UPDATES=1"
 
 :: ЧИСТКА ПРИ СТАРТЕ + ФОН.РАБОТА
 if not "%1"=="--autorun" (
@@ -209,7 +212,11 @@ echo.
 echo  %COL_GRN%1 - Запустить Zapret (все конфиги) %COL_RST%[Запуск всех категорий]
 echo  %COL_GRN%2 - Запустить Zapret (отдельные конфиги) %COL_RST%[Запуск определённых категорий]
 echo.
-echo.
+if "%CHECK_UPDATES%"=="1" (
+    echo  %COL_LYL%u - Проверять обновления при запуске [ВКЛ] %COL_RST%
+) else (
+    echo  %COL_LYL%u - Проверять обновления при запуске [ВЫКЛ] %COL_RST%
+)
 if "%HIDE_CMD%"=="1" (
     echo  %COL_BLU%h - Скрывать командную строку после запуска конфигов [ВКЛ] %COL_RST%
 ) else (
@@ -222,7 +229,7 @@ echo  %COL_YEL%l - Включить логи [ВЫКЛ] %COL_RST%
 )
 echo.
 echo  %COL_CYA%a - Настройки автозапуска%ar_warning% %COL_RST%
-echo  %COL_PNK%n - Сброс сетевых настроек %COL_RST%[Рекомендуется перед первым использованием Zapret]
+echo  %COL_RED%n - Сброс сетевых настроек %COL_RST%[Рекомендуется перед первым использованием Zapret]
 echo.
 echo.
 echo  0 - Выйти
@@ -233,6 +240,7 @@ if "%choice%"=="0" goto exit
 if "%choice%"=="1" goto launch_all_configs
 if "%choice%"=="2" goto launch_multi_config
 if /i "%choice%"=="a" goto menu_autorun_settings
+if /i "%choice%"=="u" goto toggle_check_updates
 if /i "%choice%"=="h" goto toggle_hide_cmd
 if /i "%choice%"=="i" goto toggle_ipset_global
 if /i "%choice%"=="g" goto toggle_ipset_gaming
@@ -241,6 +249,11 @@ if /i "%choice%"=="n" goto reset_network
 echo Неверный выбор!
 timeout /t 2 >nul
 goto main_loop
+
+:toggle_check_updates
+if "%CHECK_UPDATES%"=="1" (set "CHECK_UPDATES=0" & echo Проверка обновлений выключена) else (set "CHECK_UPDATES=1" & echo Проверка обновлений включена)
+call :save_settings
+timeout /t 1 >nul & goto main_loop
 
 :toggle_hide_cmd
 if "%HIDE_CMD%"=="1" (set "HIDE_CMD=0" & echo Фоновый режим выключен) else (set "HIDE_CMD=1" & echo Фоновый режим включен)
@@ -423,7 +436,7 @@ if defined selected_configs (
     
     echo.
     echo Создаю задачу автозапуска...
-    schtasks /create /tn "SmartZapretLauncher_Autorun" /tr "'%~f0' --autorun" /sc onlogon /rl highest /f >nul
+    schtasks /create /tn "SmartZapretLauncher_Autorun" /tr "\"%~f0\" --autorun" /sc onlogon /rl highest /f >nul
     
     if not errorlevel 1 (
         echo %COL_GRN%Автозапуск успешно настроен!%COL_RST%
@@ -1163,6 +1176,7 @@ echo SHOW_LOGS=%SHOW_LOGS%
 echo USE_IPSET_GLOBAL=%USE_IPSET_GLOBAL%
 echo USE_IPSET_GAMING=%USE_IPSET_GAMING%
 echo HIDE_CMD=%HIDE_CMD%
+echo CHECK_UPDATES=%CHECK_UPDATES%
 echo active_configs=%active_configs%
 echo config_count=%config_count%
 echo LAUNCH_MODE=%LAUNCH_MODE%
@@ -1318,6 +1332,7 @@ timeout /t 2 >nul
 exit
 
 :check_updates_startup
+if "%CHECK_UPDATES%"=="0" goto :eof
 chcp 437 >nul
 
 :: Проверка PS

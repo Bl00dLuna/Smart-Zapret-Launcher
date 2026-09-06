@@ -15,10 +15,6 @@ youtube.com
 youtubei.googleapis.com
 youtubekids.com
 ytimg.com
-ytimg.l.google.com
-yt3.ggpht.com
-yt4.ggpht.com
-yt3.googleusercontent.com
 
 # twitch				#Если не работает twitch, то уберите решётку на каждой строке, кроме этой
 #twitch.tv
@@ -34,3 +30,4 @@ yt3.googleusercontent.com
 betterttv.net
 frankerfacez.com
 sponsor.ajay.app
+sponsorblock-proxy.lucashmsilva.com

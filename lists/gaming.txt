@@ -110,6 +110,9 @@ starbreeze.com
 bhvr.com
 behaviourinteractive.com
 
+# Wardogs
+live.wardogs.bulkhead.pragmaengine.com
+
 # Beat Saber
 beatleader.xyz
 beatsaver.com

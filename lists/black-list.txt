@@ -152,3 +152,5 @@ play.google.com
 play.google.ru
 moddb.com
 kinogo.la
+reshade.me
+virustotal.com
