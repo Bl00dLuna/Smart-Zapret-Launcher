@@ -52,10 +52,6 @@
 Твои любимые игры и сервисы заработали? Поддержи проект, поставив ⭐ на GitHub!
 
 ## 💖 Поддержать развитие проекта
-- USDT: `TDtR49b2nP5o8gT8P9xgzfaj2Ci6tPA3VN` ← TRC20
-- BTC: `1NXnyxaQFiaM5aveojQwCoxszGesD7DZX9`
-- ETH: `0x79a18b0fd3b84ac4ba9d7f45a460333762808eb3`
-- TON: `UQDksCHDRaL8QW_dOx5wfZRWuA8XFm5ZCnwGd6kvPAUhfrwY`
 
 
 ## 📜 Лицензия
